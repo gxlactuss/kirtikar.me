@@ -1,0 +1,71 @@
+/* Ported 1:1 from app/lib/core/theme/app_colors.dart, app_theme.dart and
+ * app_motion.dart. Keep the names identical to the Dart so the two stay
+ * greppable against each other.
+ *
+ * Everything here is in px on purpose. See src/app/README-units.md. */
+
+:root {
+  /* --- AppColors --- */
+  --terracotta: #894500;
+  --primary-pressed: #6e3700;
+  --cream: #fef5ec;
+  --marigold: #c98a3e;
+  --ink: #3a2415;
+  --muted: #7a5c42;
+  --success: #5b7535;
+  --success-pressed: #475c29;
+  --danger: #a4432a;
+  --surface: #fdece0;
+  --border: #e8d5c0;
+  --success-tint: #eef2e2;
+  --warning-tint: #faf0d8;
+  --danger-tint: #f7e6df;
+
+  /* --- AppTheme metrics --- */
+  --min-tap-target: 64px;
+  --body-text-size: 18px;
+  --min-text-size: 16px;
+  --gutter: 20px;
+  --radius: 14px;
+  --border-width: 2px;
+
+  /* --- AppMotion --- */
+  --tick: 120ms;
+  --fast: 180ms;
+  --medium: 260ms;
+  --slow: 450ms;
+  --celebrate: 720ms;
+  --intro: 900ms;
+  --pulse: 900ms;
+  --breathe: 1400ms;
+
+  /* Curves.easeOutCubic / easeInCubic / easeOutBack */
+  --standard: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --standard-exit: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --in-out: cubic-bezier(0.42, 0, 0.58, 1);
+  --overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- the black stage outside the phone (not from the app) --- */
+  --stage-bg: #000000;
+  --stage-panel: #0e0e0e;
+  --stage-line: #262626;
+  --stage-text: #f2f2f2;
+  --stage-dim: #8a8a8a;
+}
+
+/* The app has no dark theme; the phone interior is always cream.
+ * The stage around it is always black. Nothing here responds to
+ * prefers-color-scheme by design. */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tick: 0ms;
+    --fast: 0ms;
+    --medium: 0ms;
+    --slow: 0ms;
+    --celebrate: 0ms;
+    --intro: 0ms;
+    --pulse: 0ms;
+    --breathe: 0ms;
+  }
+}

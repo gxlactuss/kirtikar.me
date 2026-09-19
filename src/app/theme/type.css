@@ -1,0 +1,82 @@
+/* Type scale ported verbatim from the TextTheme in
+ * app/lib/core/theme/app_theme.dart.
+ *
+ * Flutter's `height` is a multiplier of font size, which maps directly
+ * onto a unitless CSS line-height. Weights map 1:1 (w600 -> 600).
+ *
+ * These are utility classes, not element selectors, because the app applies
+ * them per-widget rather than per-tag. */
+
+.displaySmall {
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.headlineMedium {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Screen titles (ScreenHeader) */
+.headlineSmall {
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.titleLarge {
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bodyLarge {
+  font-size: 20px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.bodyMedium {
+  font-size: 18px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.labelLarge {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+/* ScreenHeader.defaultSubtitleStyle */
+.subtitle {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* AppBar title */
+.appBarTitle {
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* WholeWordText: the app never breaks a word mid-glyph-cluster, which
+ * matters for Indic scripts. `word-break: keep-all` plus `overflow-wrap:
+ * break-word` is the closest web equivalent. */
+.wholeWord {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
