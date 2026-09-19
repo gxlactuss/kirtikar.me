@@ -87,9 +87,23 @@ async function audioFor(slug: string): Promise<{ bytes: Buffer; name: string }> 
   return { bytes: await readFile(path), name: basename(path) };
 }
 
+/** Maps an upload's extension to the MIME type the server validates against. */
+const MIME: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.heic': 'image/heic',
+  '.wav': 'audio/wav',
+};
+
 async function upload(listingId: string, bytes: Buffer, name: string, type: 'image' | 'audio') {
+  // A Blob with no type reaches the server as application/octet-stream, which
+  // the media endpoint rejects outright — the bytes are never even sniffed.
+  const mime = MIME[extname(name).toLowerCase()];
+  if (!mime) throw new Error(`no MIME type known for "${name}"`);
   const form = new FormData();
-  form.append('file', new Blob([new Uint8Array(bytes)]), name);
+  form.append('file', new Blob([new Uint8Array(bytes)], { type: mime }), name);
   form.append('media_type', type);
   const res = await fetch(`${API_BASE}${V1}/listings/${listingId}/media`, {
     method: 'POST',
