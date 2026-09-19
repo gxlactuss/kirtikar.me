@@ -1,0 +1,176 @@
+.queueLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.waiting { color: var(--muted); }
+.uploading { color: var(--terracotta); }
+.processing { color: var(--success); }
+.failed { color: var(--danger); }
+
+.uploadTrack {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.uploadFill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--terracotta);
+  transition: width var(--fast) linear;
+}
+
+/* --- stage list --- */
+
+.stages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0 13px;
+}
+
+.stageIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
+.stageBody {
+  min-width: 0;
+}
+
+.stageLabel {
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--muted);
+  transition: color var(--medium) var(--standard);
+}
+
+.stageLabelActive {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stageLabelDone {
+  color: var(--ink);
+}
+
+.stageTrack {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 7px;
+  position: relative;
+}
+
+.stageFill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--terracotta);
+  transition: width 120ms linear;
+}
+
+/* Liveness once the asymptote flattens: a travelling highlight so a slow
+ * server reads as "still working", never as a frozen frame. */
+.stageShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(254, 245, 236, 0.85),
+    transparent
+  );
+  animation: sweep 1400ms var(--in-out) infinite;
+}
+
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stageShimmer::after { animation-duration: 4200ms; }
+}
+
+/* --- overall --- */
+
+.overall {
+  margin-top: 8px;
+}
+
+.overallTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.overallFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--success);
+  transition: width 120ms linear;
+}
+
+.overallLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.slow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--warning-tint);
+  border: var(--border-width) solid var(--border);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.slowIcon { color: var(--marigold); flex-shrink: 0; }
+
+.thumbs {
+  display: flex;
+  gap: 8px;
+}
+
+.thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: var(--border-width) solid var(--border);
+}
