@@ -7,9 +7,17 @@ import type {
   MediaUploadResponse,
 } from './types';
 
-/** No trailing slash; the client appends full paths. */
+/**
+ * No trailing slash; the client appends full paths.
+ *
+ * A blank value is treated as unset, not as "same origin". CI injects this
+ * from a repository variable, and an unset variable arrives as `''` rather
+ * than undefined — which `??` would happily accept, turning every call into
+ * a relative URL against the Pages site and failing as HTML-not-JSON instead
+ * of as an obvious misconfiguration.
+ */
 export const API_BASE: string = (
-  import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+  import.meta.env.VITE_API_BASE?.trim() || 'http://localhost:8000'
 ).replace(/\/+$/, '');
 
 const V1 = '/api/v1';

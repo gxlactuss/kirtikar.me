@@ -1,0 +1,59 @@
+# Builds the demo and publishes it to GitHub Pages at kirtikar.me.
+#
+# The API base is injected at build time because Vite inlines import.meta.env
+# into the bundle — there is no runtime config to change afterwards. It comes
+# from a repository *variable*, not a secret: it is a public URL that ships in
+# the JavaScript anyway, and masking it in the logs would only make a failed
+# deploy harder to read.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow one deploy at a time, and let a newer push supersede a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Fail here rather than shipping a bundle that does not compile.
+      - run: npm run typecheck
+      - run: npm run lint:units
+
+      - run: npm run build
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
