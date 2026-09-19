@@ -1,0 +1,21 @@
+/* Port of app/lib/features/capture/widgets/waveform.dart:
+ * 84px tall, 21 bars, 6px wide, 3px radius, 6px gaps. */
+
+.root {
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bar {
+  width: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: height var(--tick) linear, background-color var(--fast) var(--standard);
+}
+
+.active {
+  background: var(--terracotta);
+}

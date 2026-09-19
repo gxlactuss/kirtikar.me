@@ -1,0 +1,54 @@
+/* Port of app/lib/widgets/success_mark.dart:
+ * 116px tinted circle, 64px icon, staged 720ms animation with a ring that
+ * expands to 1.35x and fades out. */
+
+.root {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+}
+
+.circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--success-tint);
+  animation: pop var(--celebrate) var(--overshoot) both;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--success);
+  animation: expand var(--celebrate) var(--standard) both;
+  animation-delay: calc(var(--celebrate) * 0.35);
+}
+
+.icon {
+  position: relative;
+  color: var(--success);
+  animation: pop var(--celebrate) var(--overshoot) both;
+  animation-delay: calc(var(--celebrate) * 0.3);
+}
+
+.danger .circle { background: var(--danger-tint); }
+.danger .ring { border-color: var(--danger); }
+.danger .icon { color: var(--danger); }
+
+@keyframes pop {
+  from { transform: scale(0.2); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes expand {
+  from { transform: scale(1);    opacity: 0.9; }
+  to   { transform: scale(1.35); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle, .icon { animation: none; }
+  .ring { display: none; }
+}

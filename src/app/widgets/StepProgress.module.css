@@ -1,0 +1,34 @@
+/* Port of StepProgress in app/lib/widgets/stage_switcher.dart:133.
+ * Row: flex-3 progress bar, 12px gap, flex-2 "Step N of M" label. */
+
+.root {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 var(--gutter) 10px;
+}
+
+.track {
+  flex: 3;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--terracotta);
+  transition: width var(--slow) var(--standard);
+}
+
+.label {
+  flex: 2;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

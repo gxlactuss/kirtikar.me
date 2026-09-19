@@ -1,0 +1,136 @@
+/* Port of CaptureScaffold / ReviewScaffold.
+ * Layout: status bar -> app bar -> step progress -> header+body (scrolls)
+ *         -> bottom action stack. px only. */
+
+.root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  overflow: hidden;
+}
+
+/* --- fake status bar, mirrors SafeArea top --- */
+
+.statusBar {
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.statusRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusGlyphs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.75;
+}
+
+/* the "Demo data" / "Offline model" pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--warning-tint);
+  border: 1px solid var(--marigold);
+  color: #7a5220;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* --- app bar --- */
+
+.appBar {
+  flex-shrink: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+}
+
+.appBarButton {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  color: var(--terracotta);
+}
+
+.appBarButton:hover {
+  background: var(--surface);
+}
+
+.appBarTitleSlot {
+  flex: 1;
+  min-width: 0;
+  padding-inline: 4px;
+}
+
+.appBarSpacer {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+/* --- body --- */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px var(--gutter) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- bottom action stack --- */
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px var(--gutter);
+  /* The app caps this at half the screen and lets it scroll rather than
+   * squeezing the body to nothing. */
+  max-height: 50cqh;
+  overflow-y: auto;
+  background: var(--cream);
+}
+
+/* --- home indicator, mirrors SafeArea bottom --- */
+
+.homeIndicator {
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.homeBar {
+  width: 134px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ink);
+  opacity: 0.25;
+}

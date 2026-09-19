@@ -1,0 +1,110 @@
+/* Port of app/lib/widgets/big_action_button.dart.
+ * px only — this lives inside the phone viewport. */
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: var(--min-tap-target);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  transition: background-color var(--fast) var(--standard),
+    border-color var(--fast) var(--standard),
+    transform var(--fast) var(--standard);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.label {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* --- tones --- */
+
+.primary {
+  background: var(--terracotta);
+  color: #fff;
+  border: none;
+}
+
+.primary:hover:not(:disabled),
+.primary:active:not(:disabled) {
+  background: var(--primary-pressed);
+}
+
+/* The non-obvious rule: a primary button whose icon means "go" is green,
+ * not terracotta. Dart: BigActionButton._forwardIcons / _goStyle. */
+.go {
+  background: var(--success);
+  color: #fff;
+  border: none;
+}
+
+.go:hover:not(:disabled),
+.go:active:not(:disabled) {
+  background: var(--success-pressed);
+}
+
+.secondary {
+  background: transparent;
+  color: var(--ink);
+  border: var(--border-width) solid var(--border);
+}
+
+.secondary:hover:not(:disabled),
+.secondary:active:not(:disabled) {
+  background: var(--surface);
+}
+
+.danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+}
+
+.danger:hover:not(:disabled),
+.danger:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+/* --- busy spinner: 26px, strokeWidth 3 --- */
+
+.spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 900ms linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2400ms;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}

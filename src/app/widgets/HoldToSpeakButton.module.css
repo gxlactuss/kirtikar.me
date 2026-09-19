@@ -1,0 +1,83 @@
+/* Port of app/lib/widgets/hold_to_speak_button.dart:
+ * 78px min height, terracotta -> danger while recording, mic -> stop icon,
+ * two rings pulsing outward on a 1400ms loop, 0.97 scale on press. */
+
+.wrap {
+  position: relative;
+  isolation: isolate;
+}
+
+.button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 78px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  background: var(--terracotta);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color var(--fast) var(--standard),
+    transform var(--fast) var(--standard);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.recording {
+  background: var(--danger);
+}
+
+/* Two expanding rings, 12px max spread, opacity 0.55 * (1 - t). */
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  border: 2px solid var(--danger);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.ringOn {
+  animation: ripple var(--breathe) var(--in-out) infinite;
+}
+
+.ringDelayed {
+  animation-delay: calc(var(--breathe) / 2);
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    /* 12px of spread on a ~330px-wide button */
+    transform: scale(1.055);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringOn {
+    animation: none;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}
