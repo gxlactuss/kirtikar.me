@@ -2,7 +2,8 @@
  * app_motion.dart. Keep the names identical to the Dart so the two stay
  * greppable against each other.
  *
- * Everything here is in px on purpose. See src/app/README-units.md. */
+ * Everything here is in px on purpose; tools/check-units.sh enforces it and
+ * explains why. */
 
 :root {
   /* --- AppColors --- */
