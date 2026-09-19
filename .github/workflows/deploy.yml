@@ -42,6 +42,12 @@ jobs:
       - run: npm run build
         env:
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          # The deployed site replays the recorded fixtures rather than
+          # calling a backend that is not running outside a demo window.
+          # It is instant, and it cannot be caught half way through a
+          # failing request. `?demo=0` still forces the live path back on
+          # without a rebuild, so this is not a one-way door.
+          VITE_FORCE_FIXTURES: '1'
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
