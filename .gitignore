@@ -6,3 +6,7 @@ dist/
 !.env.example
 .DS_Store
 *.tsbuildinfo
+
+# Source recordings for tools/capture-fixtures.mts. The captured fixtures
+# under public/fixtures/ are committed; these input WAVs are not.
+fixtures-audio/
