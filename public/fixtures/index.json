@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "bamboo",
+    "path": "fixtures/bamboo/listing.json",
+    "title": "Traditional Hand-Woven Purulia Bamboo and Cane Utility Basket",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "embroidery",
+    "path": "fixtures/embroidery/listing.json",
+    "title": "Authentic Jodhpur Hand-Embroidered Cotton Square Tapestry",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "jewellery",
+    "path": "fixtures/jewellery/listing.json",
+    "title": "Handcrafted Red Lac Bridal Bangle Set with Glass Work",
+    "state": "ready"
+  },
+  {
+    "slug": "leather",
+    "path": "fixtures/leather/listing.json",
+    "title": "Handcrafted Buffalo Leather Kolhapuri Chappals with Intricate Braiding",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "metalwork",
+    "path": "fixtures/metalwork/listing.json",
+    "title": "Handcrafted Bidriware Style Brass Hookah Base with Silver Floral Inlay",
+    "state": "ready"
+  },
+  {
+    "slug": "other",
+    "path": "fixtures/other/listing.json",
+    "title": "Hand-Painted Traditional Wooden Sindoor Box",
+    "state": "ready"
+  },
+  {
+    "slug": "painting",
+    "path": "fixtures/painting/listing.json",
+    "title": "Authentic Hand-Painted Madhubani Painting on Handmade Paper",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "pottery",
+    "path": "fixtures/pottery/listing.json",
+    "title": "Handcrafted Wheel-Thrown Terracotta Water Pot - 2 Liters",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "weaving",
+    "path": "fixtures/weaving/listing.json",
+    "title": "Handwoven Banarasi Cotton Shawl with Intricate Gold Zari Work",
+    "state": "needs_attention"
+  },
+  {
+    "slug": "woodwork",
+    "path": "fixtures/woodwork/listing.json",
+    "title": "Hand-Carved Sheesham Wood Lord Ganesha Sculpture",
+    "state": "ready"
+  }
+]

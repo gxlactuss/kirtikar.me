@@ -1,0 +1,39 @@
+{
+  "slug": "painting",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 10054,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "7767304d-fdb0-4744-87b7-799995d5bea5",
+    "client_item_id": "663d376d9f07fa6f5f6f155b5e9f654a",
+    "state": "needs_attention",
+    "title": "Authentic Hand-Painted Madhubani Painting on Handmade Paper",
+    "description": "This exquisite Madhubani painting is meticulously handcrafted on handmade paper using vibrant natural colors. Originating from the ancient Mithila region, this traditional art form features intricate geometric patterns and detailed depictions of folklore and nature, representing a rich cultural heritage preserved and passed down through generations of women artisans.",
+    "image_urls": [
+      "fixtures/painting/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Handmade paper, natural pigments",
+      "size": "A3",
+      "colour": "Blue, Green, Red, Yellow, Orange, Pink",
+      "technique": "Madhubani Painting",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 160000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": "Photo 1: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.",
+    "suggested_price_in_paise": 160000,
+    "price_floor_in_paise": 144000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

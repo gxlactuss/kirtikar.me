@@ -1,0 +1,39 @@
+{
+  "slug": "woodwork",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 10055,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "9e31f12e-3ecf-40ef-8117-624845e18932",
+    "client_item_id": "37a4a213f7380efb46c4b4d24190f44c",
+    "state": "ready",
+    "title": "Hand-Carved Sheesham Wood Lord Ganesha Sculpture",
+    "description": "Meticulously handcrafted over six days, this stunning Lord Ganesha sculpture is carved from premium Sheesham wood. Showcasing the rich heritage of traditional Indian wood carving, the artisan brings the deity to life with intricate details on the crown, trunk, and lotus pedestal, celebrating spiritual devotion and exquisite craftsmanship.",
+    "image_urls": [
+      "fixtures/woodwork/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Sheesham Wood",
+      "size": "1 foot across",
+      "colour": "Dark Brown, Reddish Brown",
+      "technique": "Wood Carving",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 250000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": null,
+    "suggested_price_in_paise": 250000,
+    "price_floor_in_paise": 225000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

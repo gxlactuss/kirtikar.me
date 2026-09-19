@@ -1,0 +1,47 @@
+{
+  "slug": "jewellery",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 16087,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "802eb3ee-360a-452c-b59d-8275fa5382fd",
+    "client_item_id": "b9e5c81fb45d85e53e832d2bb6a49425",
+    "state": "ready",
+    "title": "Handcrafted Red Lac Bridal Bangle Set with Glass Work",
+    "description": "Handcrafted over two days, these vibrant red bridal bangles showcase the traditional Indian art of lac work. The artisan meticulously shapes the natural resin and embellishes it with intricate glass work and stones, creating a piece that embodies the cultural significance of bridal jewelry in Indian heritage.",
+    "image_urls": [
+      "fixtures/jewellery/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Natural Lac, Glass beads, Stones",
+      "size": null,
+      "colour": "Red, Gold, White",
+      "technique": "Lac Bangle Making",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 180000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [
+      {
+        "id": "f631c6b7-1ba2-4eb8-97c1-eb33557daf8b",
+        "field": "size",
+        "spoken_prompt": "The voice note did not mention how big the item is.",
+        "text_if_accepted": "size",
+        "approved": null
+      }
+    ],
+    "follow_up_question": null,
+    "suggested_price_in_paise": 180000,
+    "price_floor_in_paise": 162000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

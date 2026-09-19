@@ -1,0 +1,39 @@
+{
+  "slug": "weaving",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 14068,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "f4718934-5a2a-4b44-a479-5f1389019e07",
+    "client_item_id": "4efc0e905ff95cbb6d2668ef103e6a31",
+    "state": "needs_attention",
+    "title": "Handwoven Banarasi Cotton Shawl with Intricate Gold Zari Work",
+    "description": "Woven in the historic craft cluster of Banaras, this exquisite shawl is a testament to the artisan's mastery of the traditional handloom. Each piece takes four days of meticulous labor to complete, featuring intricate gold zari patterns against a deep, dark cotton base. This craft represents a centuries-old heritage of textile excellence, where every thread is carefully interlaced to create a timeless accessory.",
+    "image_urls": [
+      "fixtures/weaving/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Cotton, Gold Zari",
+      "size": "2 meters",
+      "colour": "Black, Gold",
+      "technique": "Banarasi Handloom Weaving",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 300000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": "Photo 1: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.",
+    "suggested_price_in_paise": 300000,
+    "price_floor_in_paise": 270000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

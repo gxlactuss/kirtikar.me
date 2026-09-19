@@ -1,0 +1,39 @@
+{
+  "slug": "leather",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 52259,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "99fe9157-4ded-4aa9-b6f9-98eff5193ffc",
+    "client_item_id": "61be489a68acac490e6a3ba68c4a5259",
+    "state": "needs_attention",
+    "title": "Handcrafted Buffalo Leather Kolhapuri Chappals with Intricate Braiding",
+    "description": "These authentic Kolhapuri chappals are meticulously hand-stitched from buffalo leather, a process that takes two days of dedicated craftsmanship. Originating from the heritage clusters of Maharashtra, this footwear features traditional braided straps and punched leather patterns, embodying a centuries-old artisanal legacy.",
+    "image_urls": [
+      "fixtures/leather/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Buffalo leather",
+      "size": "Size 8",
+      "colour": "Tan, Dark Brown, Mahogany",
+      "technique": "Kolhapuri Chappal",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 90000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": "Photo 1: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth. Several separate objects are visible. Please photograph one item at a time.",
+    "suggested_price_in_paise": 90000,
+    "price_floor_in_paise": 81000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

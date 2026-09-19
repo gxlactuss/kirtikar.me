@@ -1,0 +1,39 @@
+{
+  "slug": "embroidery",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 8045,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "87b6a2eb-6d4d-41bd-a140-82f8605e0fdb",
+    "client_item_id": "7e328276a76ca3cc636825accdb560a8",
+    "state": "needs_attention",
+    "title": "Authentic Jodhpur Hand-Embroidered Cotton Square Tapestry",
+    "description": "Handcrafted in the historic city of Jodhpur, Rajasthan, this exquisite textile features intricate traditional hand embroidery on premium cotton cloth. Meticulously detailed over five days of dedicated craftsmanship, this piece showcases the vibrant heritage and timeless needlework techniques passed down through generations of Rajasthani artisans.",
+    "image_urls": [
+      "fixtures/embroidery/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Cotton cloth",
+      "size": "1 meter x 1 meter",
+      "colour": "Red, Rust, Gold, Multicolor",
+      "technique": "Jodhpur Hand Embroidery",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 220000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": "Photo 1: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.",
+    "suggested_price_in_paise": 220000,
+    "price_floor_in_paise": 198000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

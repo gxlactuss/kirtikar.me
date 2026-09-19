@@ -1,0 +1,54 @@
+{
+  "slug": "other",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 20107,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "947eacd6-93d6-4538-8e7d-96473c20617e",
+    "client_item_id": "85436ff57025185278ce29706f66f0d0",
+    "state": "ready",
+    "title": "Hand-Painted Traditional Wooden Sindoor Box",
+    "description": "Hand-painted by an artisan dedicated to traditional woodcraft, these sindoor boxes are crafted over the course of an afternoon. This piece reflects the functional beauty of Indian folk art, used for generations in daily rituals.",
+    "image_urls": [
+      "fixtures/other/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Natural Wood",
+      "size": "3 inches across",
+      "colour": null,
+      "technique": "Hand-Painted Woodcraft",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 20000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [
+      {
+        "id": "a5f3f112-c9e5-40b6-9aba-2bb77ef02516",
+        "field": "colour",
+        "spoken_prompt": "The voice note did not mention the colour.",
+        "text_if_accepted": "colour",
+        "approved": null
+      },
+      {
+        "id": "16b52c7f-3dba-47e9-b361-59bd6a1bd84d",
+        "field": "origin",
+        "spoken_prompt": "The voice note did not mention where it was made.",
+        "text_if_accepted": "origin",
+        "approved": null
+      }
+    ],
+    "follow_up_question": null,
+    "suggested_price_in_paise": 20000,
+    "price_floor_in_paise": 18000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

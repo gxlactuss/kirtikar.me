@@ -1,0 +1,39 @@
+{
+  "slug": "bamboo",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 8042,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "01d3355a-59aa-45f0-8bce-1bfbafd5c17b",
+    "client_item_id": "37d41dc8c419ae8413594ac89e774692",
+    "state": "needs_attention",
+    "title": "Traditional Hand-Woven Purulia Bamboo and Cane Utility Basket",
+    "description": "Hand-woven in the Purulia region of West Bengal, this traditional basket showcases the meticulous skill of rural artisans. Each piece is crafted over a full day by carefully interlacing natural bamboo and cane strips, creating a durable, eco-friendly utility basket that carries the legacy of generations-old basketry techniques.",
+    "image_urls": [
+      "fixtures/bamboo/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Natural Bamboo and Cane",
+      "size": "12 inches (1 foot) diameter",
+      "colour": "Natural, Beige, Light Brown",
+      "technique": "Bamboo and Cane Craft",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 60000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [],
+    "follow_up_question": "Photo 1: Several separate objects are visible. Please photograph one item at a time.",
+    "suggested_price_in_paise": 60000,
+    "price_floor_in_paise": 54000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

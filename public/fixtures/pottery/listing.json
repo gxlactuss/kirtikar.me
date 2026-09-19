@@ -1,0 +1,47 @@
+{
+  "slug": "pottery",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 36176,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "39d443fa-9fac-48fb-b3ac-4fcab40eb24b",
+    "client_item_id": "7f405669a0e819716b4a2f7b3c842c2a",
+    "state": "needs_attention",
+    "title": "Handcrafted Wheel-Thrown Terracotta Water Pot - 2 Liters",
+    "description": "Hand-thrown on a traditional potter's wheel, this terracotta water pot represents the timeless heritage of Indian clay craftsmanship. Each piece is carefully shaped over half a day, ensuring a functional design that naturally cools water through the porous properties of the earth. This craft reflects a dedication to sustainable, handmade utility items passed down through generations.",
+    "image_urls": [
+      "fixtures/pottery/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Natural Clay",
+      "size": "2 Liters capacity",
+      "colour": "Earthy Brown, Terracotta",
+      "technique": "Terracotta Pottery",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 120000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [
+      {
+        "id": "dfa80593-2821-4b68-ac10-b79d04c5f285",
+        "field": "origin",
+        "spoken_prompt": "The voice note did not mention where it was made.",
+        "text_if_accepted": "origin",
+        "approved": null
+      }
+    ],
+    "follow_up_question": "Photo 1: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth. The item covers only 2.2% of the photo. Please move closer so it fills most of the frame.",
+    "suggested_price_in_paise": 120000,
+    "price_floor_in_paise": 108000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}

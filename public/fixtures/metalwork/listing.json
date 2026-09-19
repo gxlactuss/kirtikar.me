@@ -1,0 +1,47 @@
+{
+  "slug": "metalwork",
+  "capturedAt": "2026-09-19",
+  "backendVersion": "0.1.0",
+  "pipelineMs": 18093,
+  "stageMs": {},
+  "transcript": null,
+  "listing": {
+    "id": "30cb352a-e3b9-43fc-b54b-cffd6cc4e2e6",
+    "client_item_id": "3cf3f14fc2d9c933ddc023782a32470e",
+    "state": "ready",
+    "title": "Handcrafted Bidriware Style Brass Hookah Base with Silver Floral Inlay",
+    "description": "This exquisite hookah base is a testament to the meticulous art of metal inlay, where intricate floral motifs are hand-carved and filled with silver against a dark, oxidized background. Each piece takes a full week of dedicated labor to achieve its refined finish, preserving a traditional metalworking heritage that transforms functional objects into timeless decorative art.",
+    "image_urls": [
+      "fixtures/metalwork/photo_1.jpg"
+    ],
+    "fact_sheet": {
+      "material": "Brass with Silver Inlay",
+      "size": "9 inches tall",
+      "colour": "Black, Silver",
+      "technique": "Bidriware",
+      "origin": null,
+      "quantity": 1,
+      "price_in_paise": 400000,
+      "hours_to_make": null,
+      "material_cost_in_paise": null,
+      "is_one_of_a_kind": false
+    },
+    "suggestions": [
+      {
+        "id": "f3554560-b867-4389-af96-d74cc2d7ae92",
+        "field": "origin",
+        "spoken_prompt": "The voice note did not mention where it was made.",
+        "text_if_accepted": "origin",
+        "approved": null
+      }
+    ],
+    "follow_up_question": null,
+    "suggested_price_in_paise": 400000,
+    "price_floor_in_paise": 360000,
+    "preview_url": null,
+    "photo_consent": false,
+    "story_consent": false,
+    "views": 0,
+    "used_live_model": true
+  }
+}
