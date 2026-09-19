@@ -1,0 +1,251 @@
+/* Everything in this file is OUTSIDE the phone. It may use rem/vh freely —
+ * the px-only rule applies to src/app/** and src/buyer/**, where those units
+ * would resolve against the browser viewport and break the frame illusion. */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  background: var(--stage-bg);
+  color: var(--stage-text);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: 'left device right';
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+/* Below 1100px the side panels would squeeze the phone. Stack instead. */
+@media (max-width: 1100px) {
+  .stage {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'device';
+    place-items: center;
+    padding: 16px;
+  }
+  .left,
+  .right {
+    display: none;
+  }
+}
+
+.left {
+  grid-area: left;
+  justify-self: start;
+  max-width: 320px;
+  width: 100%;
+}
+
+.right {
+  grid-area: right;
+  justify-self: end;
+  max-width: 280px;
+  width: 100%;
+}
+
+/* --- the device --- */
+
+.deviceCell {
+  grid-area: device;
+  display: grid;
+  place-items: center;
+}
+
+/* Reserves the *scaled* footprint so the grid doesn't jump when zoom changes. */
+.deviceSlot {
+  width: calc((var(--vw) + var(--bezel) * 2) * var(--zoom));
+  height: calc((var(--vh) + var(--bezel) * 2) * var(--zoom));
+  transition:
+    width var(--medium) var(--standard),
+    height var(--medium) var(--standard);
+}
+
+/* Unscaled box. The transform here is purely optical and must never be
+ * confused with the viewport size — that is the whole point of the split. */
+.deviceScale {
+  width: calc(var(--vw) + var(--bezel) * 2);
+  height: calc(var(--vh) + var(--bezel) * 2);
+  transform: scale(var(--zoom));
+  transform-origin: top left;
+  transition:
+    width var(--medium) var(--standard),
+    height var(--medium) var(--standard);
+}
+
+.bezel {
+  width: 100%;
+  height: 100%;
+  padding: var(--bezel);
+  border-radius: 46px;
+  background: linear-gradient(160deg, #262626, #0d0d0d 55%, #1c1c1c);
+  box-shadow:
+    inset 0 0 0 1px #3a3a3a,
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 40px 90px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* The phone's interior. `container-type: size` is what lets the app use
+ * @container queries instead of @media, so it responds to the FRAME rather
+ * than to the browser window. */
+.viewport {
+  width: var(--vw);
+  height: var(--vh);
+  border-radius: 34px;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  background: var(--cream);
+  container-type: size;
+  container-name: phone;
+
+  /* Re-anchor typography to px so nothing inside inherits the stage's
+   * context or the document root's font size. */
+  font-size: var(--body-text-size);
+  line-height: 1.45;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+/* --- size picker --- */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pickerTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--stage-dim);
+  margin: 0 0 4px;
+}
+
+.sizeButton {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  color: var(--stage-dim);
+  text-align: left;
+  transition:
+    background var(--fast) var(--standard),
+    color var(--fast) var(--standard),
+    border-color var(--fast) var(--standard);
+}
+
+.sizeButton:hover {
+  border-color: #3d3d3d;
+  color: var(--stage-text);
+}
+
+.sizeButton[aria-pressed='true'] {
+  background: #17120c;
+  border-color: var(--terracotta);
+  color: var(--stage-text);
+}
+
+.key {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #1c1c1c;
+  border: 1px solid var(--stage-line);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--stage-dim);
+}
+
+.sizeButton[aria-pressed='true'] .key {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+  color: #fff;
+}
+
+.sizeName {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sizeLabel {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sizeMeta {
+  font-size: 11px;
+  color: var(--stage-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.targetTag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--marigold);
+  border: 1px solid rgba(201, 138, 62, 0.4);
+  border-radius: 4px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+/* --- zoom --- */
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--stage-line);
+}
+
+.zoomLabel {
+  font-size: 11px;
+  color: var(--stage-dim);
+  flex: 1;
+}
+
+.zoomButton {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  color: var(--stage-text);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.zoomButton:hover:not(:disabled) {
+  border-color: #3d3d3d;
+}
+
+.zoomButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.zoomValue {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--stage-dim);
+  min-width: 34px;
+  text-align: center;
+}

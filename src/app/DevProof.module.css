@@ -1,0 +1,92 @@
+/* Temporary scaffold-verification screen. Replaced by DemoApp in step 3.
+ * px only, like everything else under src/app. */
+
+.root {
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  gap: 8px;
+}
+
+@container phone (max-width: 340px) {
+  .swatches {
+    --cols: 2;
+  }
+}
+
+.swatch {
+  border-radius: 10px;
+  border: var(--border-width) solid var(--border);
+  overflow: hidden;
+  background: #fff;
+}
+
+.chip {
+  height: 42px;
+}
+
+.swatchName {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 6px 2px;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.swatchHex {
+  font-size: 10px;
+  padding: 0 6px 5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rule {
+  height: var(--border-width);
+  background: var(--border);
+  border: 0;
+  margin: 0;
+}
+
+.button {
+  min-height: var(--min-tap-target);
+  width: 100%;
+  border-radius: var(--radius);
+  background: var(--terracotta);
+  color: #fff;
+  font-size: 21px;
+  font-weight: 600;
+  padding: 12px 20px;
+}
+
+.buttonGreen {
+  background: var(--success);
+}
+
+.measure {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
