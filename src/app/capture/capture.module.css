@@ -1,0 +1,130 @@
+/* Capture screens. px only. */
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  color: var(--muted);
+  padding: 24px var(--gutter);
+}
+
+.emptyIcon {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--marigold);
+}
+
+.emptyText {
+  font-size: 18px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 260px;
+}
+
+/* --- photo set --- */
+
+.photoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.photoRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border);
+  background: var(--surface);
+}
+
+.thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--border);
+}
+
+.photoMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.photoTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.photoNote {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.star {
+  color: var(--marigold);
+}
+
+.removeButton {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.removeButton:hover {
+  background: var(--danger-tint);
+}
+
+/* --- info panel (lightbulb) --- */
+
+.infoPanel {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--warning-tint);
+  border: var(--border-width) solid var(--border);
+}
+
+.infoIcon {
+  color: var(--marigold);
+  flex-shrink: 0;
+}
+
+.infoText {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--ink);
+  margin: 0;
+}
+
+.infoText ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.infoText li {
+  margin-bottom: 3px;
+}
