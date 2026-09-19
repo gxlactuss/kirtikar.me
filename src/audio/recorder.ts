@@ -24,6 +24,21 @@ export interface Recording {
   peaks: number[];
 }
 
+/**
+ * getUserMedia is gated on a secure context, so on plain http the whole
+ * mediaDevices object is simply absent — indistinguishable, from the API
+ * alone, from a browser too old to record. Checking isSecureContext first
+ * lets the two be told apart, which matters because the advice differs:
+ * one is fixed by opening https, the other is not fixed by anything.
+ */
+export function micBlockedReason(): 'insecure' | 'unsupported' | null {
+  if (typeof window !== 'undefined' && !window.isSecureContext) return 'insecure';
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    return 'unsupported';
+  }
+  return null;
+}
+
 export type RecorderEvents = {
   onLevel?: (level: number, elapsedSeconds: number) => void;
   /** Fired when the 30s cap stops the recording on its own. */
@@ -33,7 +48,7 @@ export type RecorderEvents = {
 export class RecorderError extends Error {
   constructor(
     message: string,
-    readonly kind: 'permission' | 'unsupported' | 'tooShort' | 'failed',
+    readonly kind: 'permission' | 'unsupported' | 'insecure' | 'tooShort' | 'failed',
   ) {
     super(message);
     this.name = 'RecorderError';
@@ -59,7 +74,14 @@ export class Recorder {
 
   async start(): Promise<void> {
     if (this.recording) return;
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    const blocked = micBlockedReason();
+    if (blocked === 'insecure') {
+      throw new RecorderError(
+        'The microphone needs a secure connection. Open this page over https, or type the description instead.',
+        'insecure',
+      );
+    }
+    if (blocked === 'unsupported') {
       throw new RecorderError('This browser cannot record audio.', 'unsupported');
     }
 

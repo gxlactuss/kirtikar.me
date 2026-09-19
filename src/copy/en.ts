@@ -163,6 +163,11 @@ export const copy = {
     processingBody: 'This takes about a minute. You do not have to wait here.',
     processingSlow: 'This one is taking a little longer. Nothing is lost.',
 
+    micInsecure:
+      'The microphone only works over a secure connection. Open this page with https:// to speak, or type the description instead.',
+    micUnsupported:
+      'This browser cannot record audio. You can type the description instead.',
+
     processingFailedTitle: 'That did not work',
     processingFailedAction: 'Start again',
 

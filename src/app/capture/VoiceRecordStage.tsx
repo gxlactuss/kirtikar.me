@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { copy } from '../../copy/en';
-import { MAX_SECONDS, Recorder, RecorderError } from '../../audio/recorder';
+import { MAX_SECONDS, Recorder, RecorderError, micBlockedReason } from '../../audio/recorder';
 import { CRAFT_BY_SLUG } from '../crafts';
 import { dispatch, useDemo } from '../../machine/store';
 import { BigActionButton } from '../widgets/BigActionButton';
@@ -25,6 +25,11 @@ export function VoiceRecordStage() {
   const [recording, setRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+
+  // Checked before the button is offered rather than after it fails: on
+  // plain http there is no microphone to hold down, and pressing a dead
+  // button to find that out is a worse way to learn it.
+  const blocked = micBlockedReason();
 
   const recorderRef = useRef<Recorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -101,12 +106,14 @@ export function VoiceRecordStage() {
       stepCount={2}
       actions={
         <>
-          <HoldToSpeakButton
-            recording={recording}
-            label={recording ? copy.voiceRecording : copy.voiceHoldToSpeak}
-            onStart={() => void start()}
-            onStop={() => void stop()}
-          />
+          {blocked ? null : (
+            <HoldToSpeakButton
+              recording={recording}
+              label={recording ? copy.voiceRecording : copy.voiceHoldToSpeak}
+              onStart={() => void start()}
+              onStop={() => void stop()}
+            />
+          )}
           {voice ? (
             <BigActionButton
               label="This is right"
@@ -137,6 +144,13 @@ export function VoiceRecordStage() {
       <p className={`${css.elapsed} ${recording ? css.elapsedActive : ''}`}>
         {copy.voiceElapsed(shown, MAX_SECONDS)}
       </p>
+
+      {blocked ? (
+        <div className={css.error}>
+          <Icon name="error_outline" size={22} className={css.errorIcon} />
+          <span>{blocked === 'insecure' ? copy.demo.micInsecure : copy.demo.micUnsupported}</span>
+        </div>
+      ) : null}
 
       {error ? (
         <div className={css.error}>
