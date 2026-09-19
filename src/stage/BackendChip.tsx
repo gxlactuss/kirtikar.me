@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { watchHealth, type HealthWatcher } from '../api/health';
 import { API_BASE } from '../api/client';
+import { forceFixtures } from '../machine/flags';
 import { useDemo } from '../machine/store';
 import css from './BackendChip.module.css';
 
@@ -24,6 +25,9 @@ export function BackendChip() {
   const watcher = useRef<HealthWatcher | null>(null);
 
   useEffect(() => {
+    // A forced demo never calls the backend, so polling it would only put a
+    // red "unreachable" chip next to a run that was never going to use it.
+    if (forceFixtures()) return;
     watcher.current = watchHealth();
     const poll = setInterval(() => setLatency(watcher.current?.latency() ?? null), 1000);
     return () => {
@@ -31,6 +35,16 @@ export function BackendChip() {
       clearInterval(poll);
     };
   }, []);
+
+  // Say so before the first run too, so the chip is never blank about why
+  // nothing is being called.
+  if (forceFixtures() && provenance?.kind !== 'fixture') {
+    return (
+      <span className={`${css.chip} ${css.warming}`} title="VITE_FORCE_FIXTURES or ?demo=1">
+        Recorded run (forced)
+      </span>
+    );
+  }
 
   // Once a run has actually replayed a recording, that is the more useful
   // fact than whether the server is up.

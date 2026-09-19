@@ -3,6 +3,7 @@ import { HttpError, NetworkError, NotJsonError, TimeoutError } from '../api/erro
 import { pollToTerminal } from '../api/poll';
 import type { Listing } from '../api/types';
 import { pickFixture } from '../fallback/fixtures';
+import { forceFixtures } from './flags';
 import type { DemoStore } from './store';
 import { PipelineTicker, STAGES } from './ticker';
 import type { FallbackReason, Provenance } from './types';
@@ -31,25 +32,39 @@ export async function run(store: DemoStore, signal: AbortSignal): Promise<void> 
     store.dispatch({ t: 'progress', progress }),
   );
 
+  const fail = () => {
+    ticker.stop();
+    store.dispatch({
+      t: 'error',
+      message:
+        'The service did not answer and no recorded run was available. Please try again.',
+    });
+  };
+
   let result: RunResult;
-  try {
-    result = await live(store, ticker, signal);
-  } catch (error) {
-    if (signal.aborted) {
-      ticker.stop();
+  if (forceFixtures()) {
+    // Already the fallback, so there is nothing to fall back to.
+    try {
+      result = await replay(store, ticker, 'forced', signal);
+    } catch {
+      if (signal.aborted) ticker.stop();
+      else fail();
       return;
     }
-    const reason = reasonFor(error);
+  } else {
     try {
-      result = await replay(store, ticker, reason, signal);
-    } catch {
-      ticker.stop();
-      store.dispatch({
-        t: 'error',
-        message:
-          'The service did not answer and no recorded run was available. Please try again.',
-      });
-      return;
+      result = await live(store, ticker, signal);
+    } catch (error) {
+      if (signal.aborted) {
+        ticker.stop();
+        return;
+      }
+      try {
+        result = await replay(store, ticker, reasonFor(error), signal);
+      } catch {
+        fail();
+        return;
+      }
     }
   }
 
