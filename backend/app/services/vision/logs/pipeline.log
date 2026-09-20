@@ -1,0 +1,6 @@
+2026-09-20 06:52:50 | INFO     | [a696acb2-63ae-4ce1-86ea-24e68ca460d5] Processing image: a696acb2-63ae-4ce1-86ea-24e68ca460d5.jpg -> item_id: a696acb2-63ae-4ce1-86ea-24e68ca460d5
+2026-09-20 06:52:50 | INFO     | [a696acb2-63ae-4ce1-86ea-24e68ca460d5] Quality gate passed (blur_score=2294.2, ROI_brightness=167.9)
+2026-09-20 06:54:03 | WARNING  | [a696acb2-63ae-4ce1-86ea-24e68ca460d5] Subject gate rejected: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.; The item covers only 2.2% of the photo. Please move closer so it fills most of the frame.
+2026-09-20 06:54:34 | INFO     | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Processing image: 5eaaefaa-899a-4c4c-a358-bf082a425c80.jpg -> item_id: 5eaaefaa-899a-4c4c-a358-bf082a425c80
+2026-09-20 06:54:34 | INFO     | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Quality gate passed (blur_score=2294.2, ROI_brightness=167.9)
+2026-09-20 06:54:36 | WARNING  | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Subject gate rejected: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.; The item covers only 2.2% of the photo. Please move closer so it fills most of the frame.

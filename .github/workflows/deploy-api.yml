@@ -1,0 +1,65 @@
+# Publishes backend/ to the Hugging Face Space that serves the demo API.
+#
+# The Space is a git repository of its own, and pushing this directory to it is
+# the whole deployment: the Dockerfile at its root is what Spaces builds. Doing
+# it from CI rather than by hand means the running API is always some commit on
+# main, and that rebuilding it after a lost Space is one button.
+#
+# Needs, in repository settings:
+#   variable HF_SPACE_ID   e.g. mohitsamant/kirtikar-api
+#   secret   HF_TOKEN      a write token from huggingface.co/settings/tokens
+#
+# The API keys are NOT set here. They live in the Space's own secrets, because
+# anything this workflow injected would have to be re-pushed to rotate and
+# would sit in the Space's git history. Set SARVAM_API_KEY, GEMINI_API_KEY and
+# CORS_ORIGINS in the Space under Settings -> Variables and secrets.
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: true
+
+jobs:
+  push-to-space:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push backend/ to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_ID" ]; then
+            echo "::error::HF_TOKEN secret and HF_SPACE_ID variable must both be set."
+            exit 1
+          fi
+
+          git config --global user.email "noreply@kirtikar.me"
+          git config --global user.name "kirtikar deploy"
+
+          # A fresh orphan history each time. The Space only ever needs the
+          # current tree, and this keeps a rotated token or a stale remote from
+          # ever turning into a merge conflict at deploy time.
+          cd backend
+          rm -rf .git
+          git init -q -b main
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7} from ${GITHUB_REPOSITORY}"
+
+          # The token is passed through a credential helper rather than being
+          # written into the remote URL, so it cannot end up in the Space's
+          # git config or in this log.
+          git remote add space "https://huggingface.co/spaces/${HF_SPACE_ID}"
+          git config credential.helper '!f() { echo username=api; echo "password=$HF_TOKEN"; }; f'
+          git push --force space main
+
+          echo "Pushed to https://huggingface.co/spaces/${HF_SPACE_ID}"
