@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { forceFixtures } from '../machine/flags';
-import { useDemo } from '../machine/store';
 import { createAtomiser, type Atomiser } from './atomiser';
 import { MARK_PIECES, MARK_VIEWBOX, WORD_FILL, WORD_PATH, WORD_VIEWBOX } from './mark';
 import css from './intro.module.css';
@@ -14,11 +12,11 @@ import css from './intro.module.css';
  * than a slideshow with its own timer. Nothing here is on a clock: a visitor
  * who scrolls fast sees it fast.
  *
- * It also buys the backend its warm-up. The stage — and with it the health
- * watcher in BackendChip — is mounted from the first frame, invisible behind
- * the intro, so a Space that needs ninety seconds to wake has been waking
- * the entire time the visitor was reading. That is the point of the act two
- * status line: it is the real check, not a decoration.
+ * It also buys the backend its warm-up. The stage is mounted from the first
+ * frame, invisible behind the intro, so a Space that needs ninety seconds to
+ * wake has been waking the entire time the visitor was reading. What the
+ * check itself found is reported by the shell bar, which is pinned above
+ * every page rather than living inside one act of this sequence.
  *
  * Everything below the React render is written imperatively against refs in
  * one animation frame. Re-rendering seven petals and four thousand particles
@@ -28,17 +26,25 @@ import css from './intro.module.css';
 
 /** How far the page scrolls, as a multiple of the viewport. Set inline on
  * the track rather than in the stylesheet so the one number that decides the
- * pace of the whole sequence sits beside the windows it is divided into. */
-const TRACK_VH = 420;
+ * pace of the whole sequence sits beside the windows it is divided into.
+ *
+ * Shorter is faster: the same two acts play over less wheel travel, so the
+ * sequence answers the scroll instead of dragging behind it. */
+const TRACK_VH = 240;
 
-/** Scroll-progress windows, in [0, 1] over the whole track. */
+/** Scroll-progress windows, in [0, 1] over the whole track.
+ *
+ * They overlap deliberately. There is no point in the sequence where the
+ * guide has gone and the stage has not yet arrived — that gap was a blank
+ * screen the visitor had to scroll past, so the handoff now begins while
+ * the cards are still on their way out and the demo is the last thing. */
 const HERO_OUT: Span = [0.02, 0.3];
 const HERO_GONE: Span = [0.26, 0.33];
 const GUIDE_IN: Span = [0.28, 0.42];
-const GUIDE_OUT: Span = [0.66, 0.78];
-const PANE_OUT: Span = [0.76, 0.9];
-const VEIL: Span = [0.74, 0.94];
-const STAGE_IN: Span = [0.83, 1];
+const GUIDE_OUT: Span = [0.62, 0.8];
+const PANE_OUT: Span = [0.66, 0.86];
+const VEIL: Span = [0.62, 0.84];
+const STAGE_IN: Span = [0.7, 0.96];
 
 type Span = readonly [number, number];
 
@@ -89,7 +95,7 @@ const GUIDE = [
     title: 'Say one sentence',
     body: (
       <>
-        Hold the button and describe it — what it is, what it is made of, how long it
+        Hold the button and describe it: what it is, what it is made of, how long it
         took. <em>Up to 30 seconds</em>, in any language you like.
       </>
     ),
@@ -114,45 +120,6 @@ const SEEN_KEY = 'kirtikar:intro-seen';
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-}
-
-/**
- * The backend's real state, shown while the visitor reads the guide.
- *
- * A forced-fixtures build never calls the backend at all — BackendChip does
- * not even start the health watcher — so `backend` would sit on `unknown`
- * forever and this line would claim to be checking something it is not.
- * Say what that build actually does instead.
- */
-function WarmingLine() {
-  const { backend } = useDemo();
-
-  if (forceFixtures()) {
-    return (
-      <p className={css.footnote}>
-        <span className={css.warmDot} data-live="1" />
-        This build replays a recorded run of the pipeline, so nothing here waits on
-        a server.
-      </p>
-    );
-  }
-
-  const text = {
-    unknown: 'Checking the server…',
-    warming: 'Waking the server — it sleeps when nobody is using it.',
-    live: 'The server is awake and answering.',
-    down: 'The server is not answering; the demo will replay a recorded run.',
-  }[backend];
-
-  return (
-    <p className={css.footnote}>
-      <span
-        className={css.warmDot}
-        data-live={backend === 'live' ? '1' : backend === 'down' ? 'down' : '0'}
-      />
-      {text}
-    </p>
-  );
 }
 
 export function Intro({ children }: { children: ReactNode }) {
@@ -290,14 +257,28 @@ export function Intro({ children }: { children: ReactNode }) {
     }
 
     function frame(now: number) {
+      // Landing hides the track, which shortens the document and fires a
+      // scroll to zero. Without this the loop would still be in flight, take
+      // that zero as the new target, and play the whole sequence backwards —
+      // fading the demo out again the moment it arrived.
+      if (landedRef.current) {
+        target = 1;
+        cur = 1;
+        apply(1, 0);
+        running = false;
+        return;
+      }
+
       const entrance = entranceDone
         ? 0
         : (1 - easeOut(clamp01((now - start) / ENTRANCE_MS))) * 0.6;
       if (entrance === 0) entranceDone = true;
 
       // Chasing the scroll rather than tracking it exactly is what turns a
-      // notched trackpad or a coarse wheel into continuous motion.
-      cur += (target - cur) * 0.13;
+      // notched trackpad or a coarse wheel into continuous motion. Higher is
+      // more responsive and less smooth; this sits just on the near side of
+      // feeling like the page is lagging behind the hand.
+      cur += (target - cur) * 0.19;
       if (Math.abs(target - cur) < 0.0004) cur = target;
 
       apply(cur, entrance);
@@ -321,6 +302,8 @@ export function Intro({ children }: { children: ReactNode }) {
     }
 
     function onScroll() {
+      // The sequence is over; the scroll position no longer means anything.
+      if (landedRef.current) return;
       target = clamp01(window.scrollY / maxScroll());
       kick();
     }
@@ -438,7 +421,7 @@ export function Intro({ children }: { children: ReactNode }) {
           {/* --- act two --- */}
           <section className={`${css.act} ${css.actGuide}`}>
             <p className={css.eyebrow}>How to use it</p>
-            <h2 className={css.guideTitle}>Three things to do. About a minute.</h2>
+            <h2 className={css.guideTitle}>Create your own mock listing.</h2>
             <ol className={css.cards}>
               {GUIDE.map((step, i) => (
                 <li className={css.card} data-card key={step.title}>
@@ -448,7 +431,6 @@ export function Intro({ children }: { children: ReactNode }) {
                 </li>
               ))}
             </ol>
-            <WarmingLine />
           </section>
         </div>
       </div>
@@ -457,12 +439,16 @@ export function Intro({ children }: { children: ReactNode }) {
         {children}
       </div>
 
+      {/* Distinct keys on purpose. Without them React reuses one <button>
+          for both, and the replay control inherits the inline opacity the
+          handoff left on the skip control — a button that is present,
+          focusable and invisible. */}
       {landed ? (
-        <button className={css.replay} onClick={replay}>
+        <button key="replay" className={css.replay} onClick={replay}>
           Replay intro
         </button>
       ) : (
-        <button className={css.skip} onClick={skip}>
+        <button key="skip" className={css.skip} onClick={skip}>
           Skip to the demo
         </button>
       )}

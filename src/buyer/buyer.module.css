@@ -5,7 +5,8 @@
   min-height: 100%;
   background: var(--cream);
   color: var(--ink);
-  padding: 24px 20px 48px;
+  /* The top gutter clears the fixed server-status bar. */
+  padding: 60px 20px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -25,7 +25,7 @@ html.introRunning #root {
 
 html.introRunning {
   scroll-behavior: auto;
-  background: var(--cream);
+  background: var(--stage-bg);
 }
 
 body {
@@ -64,7 +64,16 @@ select {
   outline-offset: 2px;
 }
 
-/* The stage is black; focus rings need to be visible there too. */
+/* The stage follows the theme, so its focus ring does too — terracotta on
+ * cream, marigold once the stage goes black. */
 .stageScope :focus-visible {
-  outline-color: var(--marigold);
+  outline-color: var(--stage-accent);
+}
+
+/* The light-stage wrapper exists only to carry custom properties down to
+ * the bar floating over the buyer page. It must not become a box of its
+ * own, or the page below it loses the full-height parent it sizes against.
+ * Custom properties still inherit through display: contents. */
+.lightStage {
+  display: contents;
 }

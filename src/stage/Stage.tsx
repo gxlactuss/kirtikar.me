@@ -9,15 +9,13 @@ interface Props {
   children: ReactNode;
   /** Rendered in the left column, under the size picker. */
   aside?: ReactNode;
-  /** Rendered in the right column. */
-  panel?: ReactNode;
 }
 
 /**
  * The black desk the phone sits on. Owns device size and optical zoom;
  * everything else lives inside the frame.
  */
-export function Stage({ children, aside, panel }: Props) {
+export function Stage({ children, aside }: Props) {
   const [index, setIndex] = useState(DEFAULT_DEVICE);
   const [available, setAvailable] = useState(() => window.innerHeight);
 
@@ -80,8 +78,6 @@ export function Stage({ children, aside, panel }: Props) {
           {children}
         </DeviceFrame>
       </div>
-
-      <div className={css.right}>{panel}</div>
     </div>
   );
 }

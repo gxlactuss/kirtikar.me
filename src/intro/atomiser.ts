@@ -30,6 +30,23 @@ const MIN_DPR = 2;
 /** Alpha below this is treated as background rather than ink. */
 const INK_ALPHA = 110;
 
+/**
+ * Headroom around the wordmark, as multiples of its own width and height.
+ *
+ * Without it the canvas is exactly the size of the word, and every particle
+ * that leaves that box is clipped against its edge — which reads as a hard
+ * horizontal line the dust vanishes along, the one thing that gives the
+ * whole effect away. The canvas is grown instead and hung off the word by
+ * the same amounts, so the art still lines up with the vector underneath.
+ *
+ * `FADE` then dissolves whatever is still alive before it reaches the new
+ * edge, so the boundary is never the thing that ends a particle.
+ */
+const PAD = { x: 0.34, top: 3.2, bottom: 0.45 };
+
+/** Fraction of the padding used to fade particles out near the edge. */
+const FADE = { top: 0.62, side: 0.75 };
+
 export interface Atomiser {
   /** Size (and re-sample) for a new CSS box. Safe to call repeatedly. */
   layout(cssWidth: number, cssHeight: number): void;
@@ -38,6 +55,14 @@ export interface Atomiser {
   /** True once the raster has decoded and particles exist. */
   isReady(): boolean;
   destroy(): void;
+}
+
+/** The wordmark's own box inside the padded canvas, in device pixels. */
+interface Ink {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 interface Particles {
@@ -67,12 +92,16 @@ function patches(x: number, y: number): number {
   return (a * b + 1) / 2;
 }
 
-function sample(data: Uint8ClampedArray, w: number, h: number): Particles {
+function sample(data: Uint8ClampedArray, w: number, ink: Ink): Particles {
   const xs: number[] = [];
   const ys: number[] = [];
 
-  for (let y = 0; y < h; y += STEP) {
-    for (let x = 0; x < w; x += STEP) {
+  // Only the ink box is walked: the rest of the padded canvas is empty by
+  // construction, and scanning it would be pure cost.
+  const yEnd = ink.y + ink.h;
+  const xEnd = ink.x + ink.w;
+  for (let y = ink.y; y < yEnd; y += STEP) {
+    for (let x = ink.x; x < xEnd; x += STEP) {
       if (data[(y * w + x) * 4 + 3]! >= INK_ALPHA) {
         xs.push(x);
         ys.push(y);
@@ -100,7 +129,7 @@ function sample(data: Uint8ClampedArray, w: number, h: number): Particles {
     order[i] = i;
     // Reads left to right, the way the word does, roughened by the noise so
     // the edge of the dissolve is a frayed front rather than a wipe.
-    delays[i] = 0.3 * (xs[i]! / w) + 0.24 * patches(xs[i]!, ys[i]!);
+    delays[i] = 0.3 * ((xs[i]! - ink.x) / ink.w) + 0.24 * patches(xs[i]!, ys[i]!);
   }
   order.sort((a, b) => delays[a]! - delays[b]!);
 
@@ -110,13 +139,13 @@ function sample(data: Uint8ClampedArray, w: number, h: number): Particles {
     const y = ys[i]!;
     // Mostly upward, fanned outward from the centre of the word: ink from
     // the K blows left, ink from the r blows right.
-    const spread = (x / w - 0.5) * 1.25;
+    const spread = ((x - ink.x) / ink.w - 0.5) * 1.25;
     const ang = -Math.PI / 2 + spread + (Math.random() - 0.5) * 1.5;
     p.x[k] = x;
     p.y[k] = y;
     p.dx[k] = Math.cos(ang);
     p.dy[k] = Math.sin(ang);
-    p.reach[k] = h * (1.3 + Math.random() * 3.4);
+    p.reach[k] = ink.h * (1.2 + Math.random() * 2.2);
     p.delay[k] = delays[i]!;
     p.phase[k] = Math.random() * Math.PI * 2;
   }
@@ -127,6 +156,7 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
   const ctx = canvas.getContext('2d');
   const image = new Image();
   let particles: Particles | null = null;
+  let ink: Ink | null = null;
   let want: { w: number; h: number; dpr: number } | null = null;
   let have: { w: number; h: number; dpr: number } | null = null;
   let dead = false;
@@ -149,16 +179,32 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
     decoding = false;
     if (dead) return;
 
-    const w = Math.max(1, Math.round(size.w * size.dpr));
-    const h = Math.max(1, Math.round(size.h * size.dpr));
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = `${size.w}px`;
-    canvas.style.height = `${size.h}px`;
+    // The ink box is the word at its real size; the canvas is that box plus
+    // the headroom the dust flies into.
+    const iw = Math.max(1, Math.round(size.w * size.dpr));
+    const ih = Math.max(1, Math.round(size.h * size.dpr));
+    const padX = Math.round(iw * PAD.x);
+    const padTop = Math.round(ih * PAD.top);
+    const padBottom = Math.round(ih * PAD.bottom);
 
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(image, 0, 0, w, h);
-    particles = sample(ctx.getImageData(0, 0, w, h).data, w, h);
+    canvas.width = iw + padX * 2;
+    canvas.height = ih + padTop + padBottom;
+    // Hung off the word by exactly the padding, so the raster still sits on
+    // top of the vector it replaces.
+    canvas.style.width = `${size.w * (1 + PAD.x * 2)}px`;
+    canvas.style.height = `${size.h * (1 + PAD.top + PAD.bottom)}px`;
+    canvas.style.left = `${-size.w * PAD.x}px`;
+    canvas.style.top = `${-size.h * PAD.top}px`;
+
+    ink = { x: padX, y: padTop, w: iw, h: ih };
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, ink.x, ink.y, ink.w, ink.h);
+    particles = sample(
+      ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+      canvas.width,
+      ink,
+    );
     have = size;
 
     // A later layout() may have landed while we were decoding.
@@ -174,7 +220,7 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
     isReady: () => particles !== null,
 
     draw(t) {
-      if (!ctx || !particles || !have) return;
+      if (!ctx || !particles || !have || !ink) return;
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
@@ -182,13 +228,18 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
       // Still intact: the artwork itself, not four thousand squares pretending.
       if (t <= 0.0005) {
         ctx.globalAlpha = 1;
-        ctx.drawImage(image, 0, 0, w, h);
+        ctx.drawImage(image, ink.x, ink.y, ink.w, ink.h);
         return;
       }
 
       const p = particles;
       const dpr = have.dpr;
       const cell = STEP;
+      const box = ink;
+      // How far from the edge a particle starts giving out. Nothing should
+      // ever reach the canvas boundary while it is still visible.
+      const topFade = box.y * FADE.top;
+      const sideFade = box.x * FADE.side;
       let bucket = -1;
 
       ctx.fillStyle = '#123e63';
@@ -205,23 +256,28 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
         }
         if (local >= 1) continue;
 
-        const alpha = (1 - local) ** 1.5;
+        // Squared travel: ink hangs for a beat, then accelerates away.
+        const d = local * local * p.reach[i]!;
+        const sway = Math.sin(local * 7 + p.phase[i]!) * 9 * dpr * local;
+        const x = p.x[i]! + p.dx[i]! * d + sway;
+        const y = p.y[i]! + p.dy[i]! * d - local * box.h * 0.9;
+
+        // Two fades multiplied: the particle's own life, and its nearness to
+        // the edge of the canvas. The second is what replaces the hard line.
+        let alpha = (1 - local) ** 1.5;
+        if (y < topFade) alpha *= Math.max(0, y / topFade);
+        const edge = Math.min(x, w - x);
+        if (edge < sideFade) alpha *= Math.max(0, edge / sideFade);
+        if (alpha <= 0.004) continue;
+
         const b = (alpha * 16) | 0;
         if (b !== bucket) {
           ctx.globalAlpha = alpha;
           bucket = b;
         }
 
-        // Squared travel: ink hangs for a beat, then accelerates away.
-        const d = local * local * p.reach[i]!;
-        const sway = Math.sin(local * 7 + p.phase[i]!) * 9 * dpr * local;
         const size = Math.max(0.7 * dpr, cell * (1 - 0.5 * local));
-        ctx.fillRect(
-          p.x[i]! + p.dx[i]! * d + sway,
-          p.y[i]! + p.dy[i]! * d - local * h * 0.9,
-          size,
-          size,
-        );
+        ctx.fillRect(x, y, size, size);
       }
       ctx.globalAlpha = 1;
     },
@@ -229,6 +285,7 @@ export function createAtomiser(canvas: HTMLCanvasElement, svg: string): Atomiser
     destroy() {
       dead = true;
       particles = null;
+      ink = null;
     },
   };
 }

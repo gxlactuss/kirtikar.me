@@ -27,16 +27,17 @@
   place-items: center;
 }
 
-/* Cream for the logo and the guide, and a black veil that draws across
- * during the handoff so the stage arrives on its own background.
+/* The backdrop the logo and the guide are read on, and a veil that draws
+ * across during the handoff so the stage arrives on its own background.
+ * Both take the stage's own colour, so the whole sequence changes with the
+ * theme rather than handing a cream page over to a black one.
  *
- * Both are positioned rather than pushed behind with a negative z-index:
- * body paints black (the stage's colour), and a negative layer would paint
- * underneath it — the cream would never be seen. */
+ * Both are positioned rather than pushed behind with a negative z-index: the
+ * body is painted too, and a negative layer would paint underneath it. */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: var(--cream);
+  background: var(--stage-bg);
   z-index: 0;
 }
 
@@ -95,6 +96,13 @@
   will-change: transform;
 }
 
+/* The brand blue is fixed artwork; on the dark theme it is lifted rather
+ * than replaced, so there is only ever one set of vectors. */
+.mark,
+.word {
+  filter: brightness(var(--mark-brightness));
+}
+
 .mark {
   width: clamp(190px, 26vh, 300px);
   height: auto;
@@ -113,19 +121,27 @@
   width: clamp(240px, 40vh, 430px);
 }
 
-.wordSvg,
-.wordCanvas {
+.wordSvg {
   display: block;
   width: 100%;
   height: auto;
 }
 
 /* The canvas sits exactly over the vector and takes the handoff the moment
- * it has sampled itself; until then the crisp vector is what shows. */
+ * it has sampled itself; until then the crisp vector is what shows.
+ *
+ * Its box is deliberately much larger than the word and hung off it by the
+ * padding — size and offset are both written by the atomiser, which is the
+ * only thing that knows how much headroom the dust needs. Without that
+ * headroom the particles clip against the canvas edge and vanish along a
+ * hard line. */
 .wordCanvas {
+  display: block;
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   opacity: 0;
+  pointer-events: none;
 }
 
 .wordCanvas[data-live='1'] {
@@ -140,7 +156,7 @@
   margin: 0;
   font-size: clamp(0.95rem, 1.9vh, 1.15rem);
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: var(--stage-dim);
   text-align: center;
   will-change: transform, opacity;
 }
@@ -158,14 +174,14 @@
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--stage-dim);
   pointer-events: none;
 }
 
 .cueLine {
   width: 1px;
   height: 2.6rem;
-  background: linear-gradient(var(--marigold), transparent);
+  background: linear-gradient(var(--stage-accent), transparent);
   animation: cueFall 1.9s var(--in-out) infinite;
   transform-origin: top;
 }
@@ -184,7 +200,7 @@
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--terracotta);
+  color: var(--stage-accent);
 }
 
 .guideTitle {
@@ -192,7 +208,7 @@
   font-size: clamp(1.5rem, 4.4vh, 2.5rem);
   line-height: 1.15;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--stage-text);
   text-align: center;
   max-width: 20ch;
 }
@@ -213,8 +229,8 @@
   gap: 0.6rem;
   padding: clamp(1rem, 2.4vh, 1.6rem);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid var(--border);
+  background: var(--stage-panel);
+  border: 1px solid var(--stage-line);
   box-shadow: 0 18px 40px -28px rgba(58, 36, 21, 0.5);
   will-change: transform, opacity;
 }
@@ -225,8 +241,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: var(--terracotta);
-  color: var(--cream);
+  background: var(--stage-accent);
+  color: var(--stage-bg);
   font-size: 0.85rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -237,56 +253,20 @@
   font-size: clamp(1rem, 2.2vh, 1.2rem);
   font-weight: 700;
   line-height: 1.25;
-  color: var(--ink);
+  color: var(--stage-text);
 }
 
 .cardBody {
   margin: 0;
   font-size: clamp(0.85rem, 1.7vh, 0.95rem);
   line-height: 1.5;
-  color: var(--muted);
+  color: var(--stage-dim);
 }
 
 .cardBody em {
   font-style: normal;
   font-weight: 600;
-  color: var(--ink);
-}
-
-.footnote {
-  margin: clamp(1.25rem, 3.5vh, 2rem) 0 0;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  font-size: 0.8rem;
-  color: var(--muted);
-  text-align: center;
-}
-
-.warmDot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--marigold);
-  animation: breathe var(--breathe) var(--in-out) infinite;
-  flex: none;
-}
-
-.warmDot[data-live='1'] {
-  background: var(--success);
-  animation: none;
-}
-
-.warmDot[data-live='down'] {
-  background: var(--danger);
-  animation: none;
-}
-
-@keyframes breathe {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
+  color: var(--stage-text);
 }
 
 /* --- act three: the stage arrives --------------------------------------- */
@@ -334,14 +314,14 @@
 .skip {
   top: clamp(1rem, 3vh, 1.75rem);
   right: clamp(1rem, 3vw, 1.75rem);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--muted);
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  color: var(--stage-dim);
 }
 
 .skip:hover {
-  border-color: var(--terracotta);
-  color: var(--terracotta);
+  border-color: var(--stage-hover-line);
+  color: var(--stage-text);
 }
 
 .replay {
@@ -353,7 +333,7 @@
 }
 
 .replay:hover {
-  border-color: var(--marigold);
+  border-color: var(--stage-hover-line);
   color: var(--stage-text);
 }
 
@@ -397,14 +377,10 @@
     max-width: none;
   }
 
-  .footnote {
-    padding: 0 0.5rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cueLine,
-  .warmDot {
+  .cueLine {
     animation: none;
   }
 }

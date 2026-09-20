@@ -1,0 +1,97 @@
+/* The one bar that is on every page: the opening sequence, the demo, and
+ * the buyer page a QR code lands on. It floats above all of them, so it is
+ * fixed rather than placed in any one layout. */
+
+.bar {
+  position: fixed;
+  top: clamp(0.75rem, 2.5vh, 1.25rem);
+  left: clamp(0.75rem, 2.5vw, 1.25rem);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip,
+.toggle {
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--stage-dim);
+  box-shadow: 0 10px 24px -18px rgba(0, 0, 0, 0.55);
+  transition:
+    color var(--fast) var(--standard),
+    border-color var(--fast) var(--standard),
+    background var(--fast) var(--standard);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.live { color: var(--stage-ok-text); }
+.live .dot { background: var(--stage-ok); }
+
+.warming { color: var(--stage-warn-text); }
+.warming .dot {
+  background: var(--marigold);
+  animation: blink var(--breathe) var(--in-out) infinite;
+}
+
+.down { color: var(--stage-down-text); }
+.down .dot { background: var(--danger); }
+
+.unknown .dot { background: var(--stage-faint); }
+
+.meta {
+  color: var(--stage-faint);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- theme --- */
+
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.toggle:hover {
+  border-color: var(--stage-hover-line);
+  color: var(--stage-text);
+}
+
+.toggle svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warming .dot { animation: none; }
+}
+
+/* On a phone the label is the first thing to go; the dot still says it. */
+@media (max-width: 520px) {
+  .meta { display: none; }
+}

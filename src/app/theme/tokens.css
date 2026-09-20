@@ -45,18 +45,66 @@
   --standard-exit: cubic-bezier(0.55, 0.055, 0.675, 0.19);
   --in-out: cubic-bezier(0.42, 0, 0.58, 1);
   --overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-  /* --- the black stage outside the phone (not from the app) --- */
+/* --- the stage outside the phone ---------------------------------------
+ * Light is the default because the stage should read as the same product as
+ * the thing inside the frame: the app is cream, so the desk it sits on is
+ * cream too. The dark set below is opt-in, through the theme button.
+ *
+ * Every surface out there is painted from these names, so switching themes
+ * is one attribute on <html> and nothing has to be restyled.
+ *
+ * `.lightStage` is the same set as a class, for the one place that must
+ * stay light in both themes: the buyer page a QR scan opens is app surface,
+ * not stage, so anything floating over it has to be light too. */
+:root,
+.lightStage {
+  --stage-bg: var(--cream);
+  --stage-panel: #fffaf4;
+  --stage-line: var(--border);
+  --stage-text: var(--ink);
+  --stage-dim: var(--muted);
+  --stage-faint: #a08d78;
+
+  /* Secondary stage surfaces, so components never hardcode a shade. */
+  --stage-accent: var(--terracotta);
+  --stage-hover-line: var(--marigold);
+  --stage-active-bg: var(--surface);
+  --stage-key-bg: #f5e6d5;
+  --stage-ok: #5b7535;
+  --stage-ok-text: #4a6129;
+  --stage-warn-text: #8a5a16;
+  --stage-down-text: #a4432a;
+
+  /* The wordmark and petals are drawn in the brand blue. */
+  --mark-brightness: 1;
+}
+
+/* The phone interior is always cream — the app has no dark theme, and a
+ * demo that recoloured the product would be lying about it. Only the stage
+ * around the frame changes. */
+:root[data-theme='dark'] {
   --stage-bg: #000000;
   --stage-panel: #0e0e0e;
   --stage-line: #262626;
   --stage-text: #f2f2f2;
   --stage-dim: #8a8a8a;
-}
+  --stage-faint: #5c5c5c;
 
-/* The app has no dark theme; the phone interior is always cream.
- * The stage around it is always black. Nothing here responds to
- * prefers-color-scheme by design. */
+  --stage-accent: var(--marigold);
+  --stage-hover-line: var(--marigold);
+  --stage-active-bg: #17120c;
+  --stage-key-bg: #1c1c1c;
+  --stage-ok: #7fa34a;
+  --stage-ok-text: #cfe0b6;
+  --stage-warn-text: #e6c68d;
+  --stage-down-text: #e2a894;
+
+  /* Brand blue on black is a hole in the screen; lift it instead of
+   * shipping a second set of vectors. */
+  --mark-brightness: 1.85;
+}
 
 @media (prefers-reduced-motion: reduce) {
   :root {
