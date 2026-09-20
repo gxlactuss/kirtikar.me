@@ -1,0 +1,410 @@
+/* The opening sequence. Everything here is OUTSIDE the phone, so rem/vh are
+ * fine — the px-only rule in tools/check-units.sh covers src/app and
+ * src/buyer, where those units would resolve against the browser viewport
+ * and break the frame illusion. */
+
+.intro {
+  position: relative;
+}
+
+/* --- the scroll track ---------------------------------------------------
+ * A tall empty column whose only job is to give the wheel something to
+ * travel over. Every visible thing is in the sticky pane on top of it. */
+
+.track {
+  /* Height is set inline from TRACK_VH in Intro.tsx. */
+  position: relative;
+  z-index: 2;
+}
+
+.pane {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* Cream for the logo and the guide, and a black veil that draws across
+ * during the handoff so the stage arrives on its own background.
+ *
+ * Both are positioned rather than pushed behind with a negative z-index:
+ * body paints black (the stage's colour), and a negative layer would paint
+ * underneath it — the cream would never be seen. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--cream);
+  z-index: 0;
+}
+
+.veil {
+  position: fixed;
+  inset: 0;
+  background: var(--stage-bg);
+  opacity: 0;
+  z-index: 1;
+}
+
+/* A very faint lotus-coloured wash, so the cream is not a flat wall. */
+.backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 34%, rgba(205, 100, 60, 0.09), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, rgba(18, 62, 99, 0.1), transparent 72%);
+}
+
+/* --- acts --------------------------------------------------------------
+ * All three occupy the same cell; only opacity and transform decide which
+ * one the visitor is looking at. */
+
+.act {
+  grid-area: 1 / 1;
+  width: min(1120px, 100% - 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity;
+}
+
+/* Act one paints under act two, and holds the scroll cue. */
+.actHero {
+  position: relative;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The guide is read, never clicked. */
+.actGuide {
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* --- act one: the logo -------------------------------------------------- */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1rem, 3vh, 2rem);
+  will-change: transform;
+}
+
+.mark {
+  width: clamp(190px, 26vh, 300px);
+  height: auto;
+  overflow: visible;
+}
+
+/* Each petal pivots about its own centroid, in viewBox units. */
+.piece {
+  transform-box: view-box;
+  will-change: transform, opacity;
+}
+
+.word {
+  position: relative;
+  will-change: transform, opacity;
+  width: clamp(240px, 40vh, 430px);
+}
+
+.wordSvg,
+.wordCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The canvas sits exactly over the vector and takes the handoff the moment
+ * it has sampled itself; until then the crisp vector is what shows. */
+.wordCanvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.wordCanvas[data-live='1'] {
+  opacity: 1;
+}
+
+.wordSvg[data-hidden='1'] {
+  opacity: 0;
+}
+
+.tagline {
+  margin: 0;
+  font-size: clamp(0.95rem, 1.9vh, 1.15rem);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.cue {
+  position: absolute;
+  bottom: clamp(1.5rem, 5vh, 3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.cueLine {
+  width: 1px;
+  height: 2.6rem;
+  background: linear-gradient(var(--marigold), transparent);
+  animation: cueFall 1.9s var(--in-out) infinite;
+  transform-origin: top;
+}
+
+@keyframes cueFall {
+  0% { transform: scaleY(0.2); opacity: 0; }
+  35% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 0; transform-origin: bottom; }
+}
+
+/* --- act two: the guide ------------------------------------------------- */
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+}
+
+.guideTitle {
+  margin: 0 0 clamp(1.5rem, 5vh, 3rem);
+  font-size: clamp(1.5rem, 4.4vh, 2.5rem);
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  max-width: 20ch;
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.75rem, 1.6vw, 1.25rem);
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: clamp(1rem, 2.4vh, 1.6rem);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 40px -28px rgba(58, 36, 21, 0.5);
+  will-change: transform, opacity;
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--terracotta);
+  color: var(--cream);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: clamp(1rem, 2.2vh, 1.2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.cardBody {
+  margin: 0;
+  font-size: clamp(0.85rem, 1.7vh, 0.95rem);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.cardBody em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.footnote {
+  margin: clamp(1.25rem, 3.5vh, 2rem) 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.warmDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--marigold);
+  animation: breathe var(--breathe) var(--in-out) infinite;
+  flex: none;
+}
+
+.warmDot[data-live='1'] {
+  background: var(--success);
+  animation: none;
+}
+
+.warmDot[data-live='down'] {
+  background: var(--danger);
+  animation: none;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* --- act three: the stage arrives --------------------------------------- */
+
+.stageWrap {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  z-index: 3;
+}
+
+.stageWrap[data-landed='1'] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Once landed the track gives the viewport back entirely — not merely
+ * hidden, or its four screens of height would leave the finished demo with
+ * a scrollbar and a way to scroll the intro back over itself. */
+.track[data-landed='1'] {
+  display: none;
+}
+
+/* --- controls ----------------------------------------------------------- */
+
+.skip,
+.replay {
+  position: fixed;
+  z-index: 5;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    opacity var(--fast) var(--standard),
+    border-color var(--fast) var(--standard),
+    color var(--fast) var(--standard);
+}
+
+.skip {
+  top: clamp(1rem, 3vh, 1.75rem);
+  right: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+}
+
+.skip:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.replay {
+  bottom: clamp(0.75rem, 2.5vh, 1.25rem);
+  right: clamp(0.75rem, 2.5vw, 1.25rem);
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  color: var(--stage-dim);
+}
+
+.replay:hover {
+  border-color: var(--marigold);
+  color: var(--stage-text);
+}
+
+/* --- narrow ------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  /* Clears the fixed skip control, which otherwise lands on the eyebrow. */
+  .act {
+    padding-top: 3.25rem;
+    width: min(1120px, 100% - 2rem);
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  /* The numeral moves beside the text rather than above it, with the title
+   * and body sharing one column — in a row all three compete for width and
+   * "Pick one photo" ends up on three lines. */
+  .card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    column-gap: 0.9rem;
+    row-gap: 0.3rem;
+  }
+  .step {
+    grid-area: 1 / 1;
+  }
+  .cardTitle,
+  .cardBody {
+    grid-column: 2;
+  }
+
+  /* Height alone decides the size on a phone in portrait, and 4.4vh of an
+   * 844px screen is far too wide for a 390px one. */
+  .guideTitle {
+    font-size: clamp(1.35rem, min(4.4vh, 6.4vw), 2.5rem);
+    margin-bottom: 1.25rem;
+    max-width: none;
+  }
+
+  .footnote {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cueLine,
+  .warmDot {
+    animation: none;
+  }
+}

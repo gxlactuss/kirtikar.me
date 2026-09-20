@@ -13,6 +13,21 @@ body,
   height: 100%;
 }
 
+/* The opening sequence is played by scrolling the document, so while it is
+ * running the page has to be taller than the window. Once it has landed the
+ * stage takes the viewport back and nothing scrolls but the phone. */
+html.introRunning,
+html.introRunning body,
+html.introRunning #root {
+  height: auto;
+  min-height: 100%;
+}
+
+html.introRunning {
+  scroll-behavior: auto;
+  background: var(--cream);
+}
+
 body {
   margin: 0;
   background: var(--stage-bg);

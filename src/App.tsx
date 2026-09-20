@@ -4,6 +4,7 @@ import { ExplainerPanel } from './stage/ExplainerPanel';
 import { BackendChip } from './stage/BackendChip';
 import { DemoApp } from './app/DemoApp';
 import { BuyerView } from './buyer/BuyerView';
+import { Intro } from './intro/Intro';
 
 export function App() {
   // The QR's buyer page renders full-bleed: a buyer scanning the code is
@@ -15,17 +16,22 @@ export function App() {
     return <BuyerView encoded={payload ?? undefined} listingId={listingId ?? undefined} />;
   }
 
+  // The stage is mounted from the first frame even though the intro covers
+  // it, so BackendChip's health watcher starts waking a sleeping Space while
+  // the visitor is still looking at the logo.
   return (
-    <Stage
-      aside={<ProductRail />}
-      panel={
-        <>
-          <BackendChip />
-          <ExplainerPanel />
-        </>
-      }
-    >
-      <DemoApp />
-    </Stage>
+    <Intro>
+      <Stage
+        aside={<ProductRail />}
+        panel={
+          <>
+            <BackendChip />
+            <ExplainerPanel />
+          </>
+        }
+      >
+        <DemoApp />
+      </Stage>
+    </Intro>
   );
 }
