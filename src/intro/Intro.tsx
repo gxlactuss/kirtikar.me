@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { forceFixtures } from '../machine/flags';
 import { useDemo } from '../machine/store';
 import { createAtomiser, type Atomiser } from './atomiser';
 import { MARK_PIECES, MARK_VIEWBOX, WORD_FILL, WORD_PATH, WORD_VIEWBOX } from './mark';
@@ -115,18 +116,40 @@ function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
-/** The backend's real state, shown while the visitor reads the guide. */
+/**
+ * The backend's real state, shown while the visitor reads the guide.
+ *
+ * A forced-fixtures build never calls the backend at all — BackendChip does
+ * not even start the health watcher — so `backend` would sit on `unknown`
+ * forever and this line would claim to be checking something it is not.
+ * Say what that build actually does instead.
+ */
 function WarmingLine() {
   const { backend } = useDemo();
+
+  if (forceFixtures()) {
+    return (
+      <p className={css.footnote}>
+        <span className={css.warmDot} data-live="1" />
+        This build replays a recorded run of the pipeline, so nothing here waits on
+        a server.
+      </p>
+    );
+  }
+
   const text = {
     unknown: 'Checking the server…',
     warming: 'Waking the server — it sleeps when nobody is using it.',
     live: 'The server is awake and answering.',
     down: 'The server is not answering; the demo will replay a recorded run.',
   }[backend];
+
   return (
     <p className={css.footnote}>
-      <span className={css.warmDot} data-live={backend === 'live' ? '1' : backend === 'down' ? 'down' : '0'} />
+      <span
+        className={css.warmDot}
+        data-live={backend === 'live' ? '1' : backend === 'down' ? 'down' : '0'}
+      />
       {text}
     </p>
   );
