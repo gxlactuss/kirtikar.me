@@ -24,8 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd --create-home --uid 1000 app
 WORKDIR /app
 
-COPY --chown=app:app requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# constraints.txt pins every transitive package too, so a rebuild months from
+# now installs the same bytes the tests ran against.
+COPY --chown=app:app requirements.txt constraints.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -c constraints.txt
 
 USER app
 
