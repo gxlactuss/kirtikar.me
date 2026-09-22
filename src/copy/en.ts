@@ -62,6 +62,7 @@ export const copy = {
   attentionTitle: 'One question',
   attentionBody: 'We understood everything else. Only this is missing.',
   attentionRetakePhotos: 'Take the photos again',
+  attentionStartAgain: 'Start again',
 
   // --- read back ---
   readBackTitle: 'This is what we understood',

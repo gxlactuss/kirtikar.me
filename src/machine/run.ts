@@ -15,6 +15,18 @@ import type { FallbackReason, Provenance } from './types';
  */
 const MIN_VISIBLE_FRACTION = 0.55;
 
+/**
+ * How long a submit waits for a cold server before replaying a recording.
+ *
+ * With scale-to-zero most judges arrive at a cold replica, and it takes
+ * 40-60s to answer. The health watcher starts waking it on the first frame,
+ * but a visitor who submits before it is up used to hit createListing's 15s
+ * timeout and get the recording, although the real server was seconds away.
+ * Waiting on the watcher instead turns that into a slightly longer "waiting"
+ * line and a real run.
+ */
+const WAKE_WAIT_MS = 75_000;
+
 interface RunResult {
   listing: Listing;
   provenance: Provenance;
@@ -88,6 +100,7 @@ async function live(
   const clientItemId = crypto.randomUUID();
 
   store.dispatch({ t: 'queue', queue: { kind: 'waiting' } });
+  await untilAwake(store, signal);
   const created = await api.createListing(
     clientItemId,
     { description: typed, photoCount: photos.length },
@@ -192,6 +205,24 @@ async function replay(
 }
 
 /* ---------------- helpers ---------------- */
+
+/**
+ * Resolves once the health watcher has seen the server answer.
+ *
+ * Gives up as a cold start when the watcher declares the server down, or
+ * when WAKE_WAIT_MS passes first.
+ */
+async function untilAwake(store: DemoStore, signal: AbortSignal): Promise<void> {
+  const deadline = performance.now() + WAKE_WAIT_MS;
+  for (;;) {
+    const status = store.peek().backend;
+    if (status === 'live') return;
+    if (status === 'down' || performance.now() > deadline) {
+      throw new FallbackSignal('cold-start');
+    }
+    await wait(250, signal);
+  }
+}
 
 /** Thrown when polling gives up; carries the reason through to the badge. */
 class FallbackSignal extends Error {

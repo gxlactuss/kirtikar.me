@@ -17,10 +17,15 @@ export function NeedsAttentionStage() {
   const { listing } = useDemo();
   if (!listing) return null;
 
+  // A run that stopped before anything was written (the voice note could not
+  // be heard, say) has understood nothing else, and new photos would not fix
+  // it; only a photo the gate turned away arrives here with a title.
+  const wroteSomething = Boolean(listing.title);
+
   return (
     <ReviewScaffold
       title={copy.attentionTitle}
-      subtitle={copy.attentionBody}
+      subtitle={wroteSomething ? copy.attentionBody : undefined}
       actions={
         <>
           <BigActionButton
@@ -29,8 +34,8 @@ export function NeedsAttentionStage() {
             onClick={() => dispatch({ t: 'reviewNext' })}
           />
           <BigActionButton
-            label={copy.attentionRetakePhotos}
-            icon="photo_camera"
+            label={wroteSomething ? copy.attentionRetakePhotos : copy.attentionStartAgain}
+            icon={wroteSomething ? 'photo_camera' : 'refresh'}
             tone="secondary"
             onClick={() => dispatch({ t: 'reset' })}
           />
