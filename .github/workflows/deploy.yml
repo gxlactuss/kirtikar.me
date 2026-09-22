@@ -39,16 +39,30 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint:units
 
+      # An unset VITE_API_BASE does not fail the build: client.ts falls back
+      # to http://localhost:8000, every visitor's request fails, and every run
+      # quietly replays a recording that looks exactly like success. Stop here
+      # instead, while the previous deploy is still the one being served.
+      - name: Check the API base is configured
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+        run: |
+          case "$VITE_API_BASE" in
+            https://*) echo "API base: $VITE_API_BASE" ;;
+            *)
+              echo "::error::Repository variable VITE_API_BASE is unset or not https:// ('$VITE_API_BASE'). See DEPLOY.md, step 7."
+              exit 1
+              ;;
+          esac
+
       - run: npm run build
         env:
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
-          # The site now calls the real pipeline. The backend it talks to is
-          # kept awake by .github/workflows/keepalive.yml, so there is no
-          # longer a "demo window" outside which it is not running.
+          # The site calls the real pipeline on Azure Container Apps.
           #
           # The recorded fixtures have not gone anywhere: src/machine/run.ts
           # tries the network first and replays a recording on any failure,
-          # so a cold Space or a dead API key still shows a complete run
+          # so a cold replica or a dead API key still shows a complete run
           # rather than an error. `?demo=1` forces the recording back on
           # without a rebuild.
           VITE_FORCE_FIXTURES: '0'

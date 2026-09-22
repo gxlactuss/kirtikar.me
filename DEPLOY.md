@@ -57,6 +57,13 @@ It makes every listing readable and editable by anyone who can reach it.
 
 ## First-time setup
 
+**The short way:** `./tools/azure-setup.sh` after `az login`. It runs steps 1-7
+below plus the budget alert, skips anything that already exists (so a pass that
+stops halfway is finished by running it again), reads the two API keys from a
+hidden prompt, and, when this GitHub account cannot set repository variables
+(that needs admin, not push), prints the five values for someone who can. The
+steps are spelled out below so each one can be understood and run by hand.
+
 All of it is CLI. Sign in once and pin the subscription, so nothing below
 silently lands in a different one:
 
@@ -381,11 +388,13 @@ az containerapp logs show -n kirtikar-api -g kirtikar-rg --type system --tail 50
 
 ## Things that would bite later
 
-- **`backend/requirements.txt` pins nothing** — every dependency is `>=`. The
-  service only rebuilds when something is pushed, so a running deployment is
-  stable; but a redeploy during the judging window could pull a new rembg or
-  onnxruntime and build something that was never tested. If you have to
-  redeploy mid-window, check the ACR build log before trusting it.
+- **Dependencies are pinned, and the pins are the tested set.**
+  `backend/requirements.txt` pins the direct dependencies and
+  `backend/constraints.txt` every transitive one, both resolved for the
+  image's platform (linux/x86-64, Python 3.11) on 2026-09-23; the backend
+  suite passes against them. A mid-window redeploy builds exactly this set. To
+  upgrade anything, loosen it, rebuild, run the tests, and regenerate both
+  files together.
 - **The free grant is a budget, not a guarantee.** 180K vCPU-seconds and 360K
   GiB-seconds a month is generous against bursty judging traffic, but a runaway
   loop or a stuck replica would eat it. Set a budget alert at $5 on the
@@ -402,7 +411,16 @@ az containerapp logs show -n kirtikar-api -g kirtikar-rg --type system --tail 50
   running with the wrong permissions. That is the intended behaviour; if you
   need a staging branch to deploy, add a second federated credential rather
   than loosening the subject.
-- **The bundled craft photos fail the image subject gate** — they are
-  photographed in context rather than against a plain background, so a run ends
-  in `needs_attention` with a framing note. That is the pipeline working
-  correctly and matches the recorded fixtures, which end the same way.
+- **Six of the ten bundled craft photos fail the image subject gate** —
+  pottery, handloom, embroidery, Madhubani, leather and bamboo are
+  photographed in context rather than against a plain background, so a run on
+  them ends in `needs_attention` asking for a retake. That is the pipeline
+  working correctly. Jewellery, metalwork, wood carving and the sindoor boxes
+  pass, so `src/app/crafts.ts` puts them first in the rail: a judge's first
+  try should end in a finished listing. Re-measure before reordering.
+- **A voice note is transcribed live or not at all.** Sarvam's `saaras:v3`
+  is served only from `/speech-to-text` with `mode=translate`; the service
+  used to call the legacy `/speech-to-text-translate`, which rejects v3, and
+  hid every failure behind a canned transcript about a Madhubani painting. If
+  a run ends asking the visitor to record again, read the console log for the
+  Sarvam status code before suspecting anything else.
