@@ -263,7 +263,8 @@ def test_stage_outputs_flow_through_context(test_db: Session, seeded_seller_and_
     assert captured_ctx.speech_output is not None
     assert "handmade" in captured_ctx.speech_output.transcript.lower()
     assert captured_ctx.fact_sheet_output is not None
-    assert captured_ctx.fact_sheet_output.craft_type == "Madhubani Art"
+    # The offline extraction names no craft it was not told about.
+    assert captured_ctx.fact_sheet_output.craft_type == "Handcraft"
     assert captured_ctx.price_output is not None
     assert captured_ctx.price_output.recommended_price == 1500.0
     assert captured_ctx.confidence_output is not None

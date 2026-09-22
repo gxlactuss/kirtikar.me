@@ -389,44 +389,32 @@ class GeminiExtractor:
         )
 
     def _synthetic_fallback(self, transcript: str, image_path: Optional[str] = None) -> GeminiExtractionResult:
-        is_pottery = image_path and "pottery" in image_path.lower()
-        if is_pottery:
-            attributes = {
-                "dimensions": "8x6 inches",
-                "origin": "Khurja / Dharavi Pottery Cluster",
-                "primary_colors": ["terracotta", "earthy red", "natural clay"],
-                "stated_price": None,
-                "missing_fields": ["price"],
-            }
-            return GeminiExtractionResult(
-                title="Handcrafted Terracotta Clay Water Pot",
-                craft_type="Terracotta Pottery",
-                material="Natural kiln-fired clay",
-                story_summary=transcript,
-                stated_price=None,
-                dimensions="8x6 inches",
-                origin="Khurja / Dharavi Pottery Cluster",
-                colors=["terracotta", "earthy red", "natural clay"],
-                missing_fields=["price"],
-                attributes=attributes,
-            )
+        """What to show when no model could be reached: the artisan's own words, and nothing invented.
 
-        attributes = {
-            "dimensions": "1024x768",
-            "origin": "Mithila region",
-            "primary_colors": ["ochre", "indigo", "lampblack"],
-            "stated_price": None,
-            "missing_fields": ["price"],
-        }
+        This used to answer with a fixed Madhubani painting from the Mithila
+        region (or, for a path containing "pottery", a Khurja water pot), so a
+        live run whose writing model was down described some other object with
+        total confidence. The site already labels this case as the offline
+        fallback; the least it can do is not contradict the photo. Every fact
+        nobody stated is left empty and listed as missing, so the review screens
+        ask for it instead.
+        """
+        missing = ["price", "dimensions", "colors", "material"]
         return GeminiExtractionResult(
-            title="Handcrafted Madhubani Folk Painting",
-            craft_type="Madhubani Art",
-            material="Natural pigments on handmade paper",
+            title="Handmade item",
+            craft_type="Handcraft",
+            material="",
             story_summary=transcript,
             stated_price=None,
-            dimensions="1024x768",
-            origin="Mithila region",
-            colors=["ochre", "indigo", "lampblack"],
-            missing_fields=["price"],
-            attributes=attributes,
+            dimensions=None,
+            origin=None,
+            colors=[],
+            missing_fields=list(missing),
+            attributes={
+                "dimensions": None,
+                "origin": None,
+                "primary_colors": [],
+                "stated_price": None,
+                "missing_fields": list(missing),
+            },
         )
