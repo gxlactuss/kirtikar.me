@@ -1,29 +1,35 @@
-# Keeps the demo API awake.
+# Checks once a day that the demo API still answers.
 #
-# A free Hugging Face Space sleeps after 48 hours with no traffic and then
-# needs 60-180s to come back. The judging window runs unannounced across a
-# month, so "it was awake when we last looked" is not good enough: a judge who
-# opens kirtikar.me on a quiet Tuesday has to get the live pipeline, not a
-# recorded run.
+# This used to ping every 15 minutes, which was the right thing against a
+# Hugging Face Space: a Space is one long-lived process that sleeps after 48
+# idle hours, so frequent traffic kept it from ever sleeping AND kept the
+# IS-Net model loaded in memory.
 #
-# Pinging every 15 minutes does two things. It keeps the Space from ever
-# reaching the idle threshold, and it keeps the process hot — the IS-Net model
-# stays loaded, so the first real visitor does not pay for the warm-up either.
+# Neither half of that carries over to Azure Container Apps. With
+# min-replicas 0 the replica is scaled away a few minutes after the last
+# request no matter how often you ping, so the pings buy no warmth. And
+# holding one up instead -- min-replicas 1 -- means a 1 vCPU / 2GiB replica
+# billed around the clock, roughly 2.6M vCPU-seconds a month against a free
+# grant of 180K, which is about $30-40 a month for a demo that otherwise
+# costs nothing.
 #
-# It also fails loudly. A failed scheduled run emails the repository owner,
-# which for an unattended month is the only way anyone finds out the API has
-# stopped answering before a judge does.
-name: Keep the API awake
+# So this is a liveness check, not a keep-alive. What it still buys is the
+# thing that matters for an unattended month: a failed scheduled run emails the
+# repository owner, which is the only way anyone learns the API has stopped
+# answering before a judge does.
+#
+# Cold starts are covered elsewhere. The site's scroll intro gives the
+# replica a head start, and src/machine/run.ts replays a recorded run on any
+# failure, labelled "Demo data" with the reason.
+name: Check the API answers
 
 on:
   schedule:
-    # Every 15 minutes. GitHub runs scheduled workflows late under load,
-    # sometimes by half an hour; that is harmless against a 48-hour idle
-    # threshold and is why this is not tuned any finer.
-    - cron: '*/15 * * * *'
+    # Once a day, a few minutes past the hour. GitHub runs scheduled workflows
+    # late under load; nothing here is time-sensitive to within hours.
+    - cron: '7 3 * * *'
   workflow_dispatch:
 
-# A queued ping is worthless once a newer one is running.
 concurrency:
   group: keepalive
   cancel-in-progress: true
@@ -44,18 +50,15 @@ jobs:
           base="${API_BASE%/}"
           echo "Pinging $base/health"
 
-          # A sleeping Space answers the first request with an HTML "starting
-          # up" page and only then begins waking, so one failed attempt proves
-          # nothing. Retry across roughly three minutes, which covers a normal
-          # cold start, before calling it down.
+          # A cold replica has to be scheduled, pull the image and import the
+          # app before it answers, which takes up to a minute. Retry across
+          # roughly three minutes before calling it down.
           for attempt in $(seq 1 12); do
             body=$(curl -fsS --max-time 20 "$base/health" 2>/dev/null) && {
               echo "$body"
-              # Reaching the app is the point; an HTML holding page is the
-              # Space's own front door and means it is still waking.
               case "$body" in
                 *'"status"'*'"ok"'*)
-                  echo "API is awake."
+                  echo "API is answering."
                   exit 0
                   ;;
               esac

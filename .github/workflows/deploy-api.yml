@@ -1,18 +1,30 @@
-# Publishes backend/ to the Hugging Face Space that serves the demo API.
+# Builds backend/ and deploys it to Azure Container Apps, which serves the demo API.
 #
-# The Space is a git repository of its own, and pushing this directory to it is
-# the whole deployment: the Dockerfile at its root is what Spaces builds. Doing
-# it from CI rather than by hand means the running API is always some commit on
-# main, and that rebuilding it after a lost Space is one button.
+# ACR Tasks builds the image from backend/Dockerfile server-side (`az acr
+# build`), so nothing here needs Docker. The same Dockerfile that ran on a
+# Hugging Face Space runs unchanged: it already listens on 7860 and runs as
+# uid 1000, and the container app's ingress is pointed at 7860 when it is
+# first created.
 #
-# Needs, in repository settings:
-#   variable HF_SPACE_ID   e.g. mohitsamant/kirtikar-api
-#   secret   HF_TOKEN      a write token from huggingface.co/settings/tokens
+# Needs, in repository settings (all variables, no secrets -- see below):
+#   AZURE_CLIENT_ID        app registration used by this workflow
+#   AZURE_TENANT_ID        the directory that app lives in
+#   AZURE_SUBSCRIPTION_ID  f3849fe0-171c-4378-81ce-3c1769804ed0
+#   AZURE_REGISTRY         the ACR name, without .azurecr.io
 #
-# The API keys are NOT set here. They live in the Space's own secrets, because
-# anything this workflow injected would have to be re-pushed to rotate and
-# would sit in the Space's git history. Set SARVAM_API_KEY, GEMINI_API_KEY and
-# CORS_ORIGINS in the Space under Settings -> Variables and secrets.
+# Login is OIDC: GitHub mints a short-lived token for this repository and
+# Azure trades it for one, against a federated credential on the app
+# registration. There is no client secret anywhere, which is the whole point --
+# a long-lived deployer credential sitting in a repository secret was the one
+# thing the Cloud Run setup this replaced never had a good answer for.
+#
+# The API keys are NOT set here. They are container app secrets, set once by
+# hand and referenced below as `secretref:`, so rotating one is a single
+# `az containerapp secret set` and a redeploy rather than a change to this
+# file -- and so they never sit in this repository's history.
+#
+# The app itself is created by hand once (DEPLOY.md, step 5), because creating
+# it requires the API keys. This workflow only ever updates an app that exists.
 name: Deploy API
 
 on:
@@ -27,39 +39,98 @@ concurrency:
   group: deploy-api
   cancel-in-progress: true
 
+# id-token is what lets azure/login exchange a GitHub OIDC token for an Azure
+# one. Without it the login step fails with a confusing "no credentials".
+permissions:
+  id-token: write
+  contents: read
+
+# Names are fixed here rather than being repository variables: they only have
+# to be unique inside one subscription, and having them in the file means the
+# deploy reads the same as the setup in DEPLOY.md. The registry is a variable
+# because an ACR name is globally unique and cannot be guessed in advance.
+env:
+  RESOURCE_GROUP: kirtikar-rg
+  APP_NAME: kirtikar-api
+  IMAGE_NAME: kirtikar-api
+
 jobs:
-  push-to-space:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Push backend/ to the Space
+      - name: Check the deploy is configured
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+          CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          REGISTRY: ${{ vars.AZURE_REGISTRY }}
         run: |
-          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_ID" ]; then
-            echo "::error::HF_TOKEN secret and HF_SPACE_ID variable must both be set."
+          missing=
+          [ -z "$CLIENT_ID" ] && missing="$missing AZURE_CLIENT_ID"
+          [ -z "$TENANT_ID" ] && missing="$missing AZURE_TENANT_ID"
+          [ -z "$SUBSCRIPTION_ID" ] && missing="$missing AZURE_SUBSCRIPTION_ID"
+          [ -z "$REGISTRY" ] && missing="$missing AZURE_REGISTRY"
+          if [ -n "$missing" ]; then
+            echo "::error::Not configured. Missing:$missing -- see DEPLOY.md"
             exit 1
           fi
 
-          git config --global user.email "noreply@kirtikar.me"
-          git config --global user.name "kirtikar deploy"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-          # A fresh orphan history each time. The Space only ever needs the
-          # current tree, and this keeps a rotated token or a stale remote from
-          # ever turning into a merge conflict at deploy time.
-          cd backend
-          rm -rf .git
-          git init -q -b main
-          git add -A
-          git commit -q -m "Deploy ${GITHUB_SHA::7} from ${GITHUB_REPOSITORY}"
+      # The containerapp commands live in an extension that is not in the
+      # runner's preinstalled CLI. Installing it explicitly keeps a surprise
+      # "extension not installed" prompt out of the middle of a deploy.
+      - name: Install the containerapp extension
+        run: az extension add --name containerapp --upgrade --only-show-errors
 
-          # The token is passed through a credential helper rather than being
-          # written into the remote URL, so it cannot end up in the Space's
-          # git config or in this log.
-          git remote add space "https://huggingface.co/spaces/${HF_SPACE_ID}"
-          git config credential.helper '!f() { echo username=api; echo "password=$HF_TOKEN"; }; f'
-          git push --force space main
+      # Fail here, with something actionable, rather than three minutes later
+      # after a build whose image has nowhere to go.
+      - name: Check the app exists
+        run: |
+          if ! az containerapp show -n "$APP_NAME" -g "$RESOURCE_GROUP" -o none 2>/dev/null; then
+            echo "::error::Container app $APP_NAME not found in $RESOURCE_GROUP. Create it once by hand -- DEPLOY.md, step 5."
+            exit 1
+          fi
 
-          echo "Pushed to https://huggingface.co/spaces/${HF_SPACE_ID}"
+      # Server-side build. The context is backend/, so the image is built from
+      # exactly the tree this commit has, and it is tagged with the commit so
+      # a revision in the portal can be traced back to a line of code.
+      - name: Build the image in ACR
+        env:
+          REGISTRY: ${{ vars.AZURE_REGISTRY }}
+        run: |
+          az acr build \
+            --registry "$REGISTRY" \
+            --image "$IMAGE_NAME:$GITHUB_SHA" \
+            --image "$IMAGE_NAME:latest" \
+            --file Dockerfile \
+            backend
+
+      # Every flag below is load-bearing; DEPLOY.md says which breaks what.
+      - name: Deploy to Container Apps
+        env:
+          REGISTRY: ${{ vars.AZURE_REGISTRY }}
+        run: |
+          az containerapp update \
+            --name "$APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$REGISTRY.azurecr.io/$IMAGE_NAME:$GITHUB_SHA" \
+            --cpu 1 --memory 2Gi \
+            --min-replicas 0 \
+            --max-replicas 1 \
+            --set-env-vars \
+              'CORS_ORIGINS=https://kirtikar.me,https://www.kirtikar.me,http://localhost:5173' \
+              'SARVAM_API_KEY=secretref:sarvam-api-key' \
+              'GEMINI_API_KEY=secretref:gemini-api-key' \
+            --output none
+
+          fqdn=$(az containerapp show \
+            --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --query 'properties.configuration.ingress.fqdn' -o tsv)
+          echo "https://$fqdn"
