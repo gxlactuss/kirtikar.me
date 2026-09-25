@@ -18,6 +18,10 @@ const DBFS_FLOOR = -45;
 const SMOOTHING = 0.4;
 const POLL_MS = 100;
 
+const NO_SOUND =
+  'No sound came through from the microphone. Check that this browser is allowed to use it ' +
+  '(on a Mac: System Settings, Privacy & Security, Microphone), or type the description instead.';
+
 export interface Recording {
   wav: Blob;
   seconds: number;
@@ -138,8 +142,20 @@ export class Recorder {
     await stopped;
     this.teardown();
 
+    // A microphone the OS has blocked, or one muted at the device, still
+    // "records": getUserMedia succeeds and the timer runs, but what comes
+    // back is empty or pure silence, and decoding it surfaces the browser's
+    // own "Unable to decode audio data". Say what is actually wrong.
     const raw = new Blob(this.chunks, { type: rec.mimeType || 'audio/webm' });
-    const { wav, seconds } = await toWav(raw);
+    if (raw.size === 0) throw new RecorderError(NO_SOUND, 'failed');
+    let converted: Awaited<ReturnType<typeof toWav>>;
+    try {
+      converted = await toWav(raw);
+    } catch {
+      throw new RecorderError(NO_SOUND, 'failed');
+    }
+    const { wav, seconds, silent } = converted;
+    if (silent) throw new RecorderError(NO_SOUND, 'failed');
 
     if (seconds < MIN_SECONDS) {
       throw new RecorderError('That was very short.', 'tooShort');

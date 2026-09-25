@@ -21,7 +21,9 @@
 export const TARGET_SAMPLE_RATE = 22050;
 
 /** Decode whatever MediaRecorder produced, downmix, resample, encode WAV. */
-export async function toWav(input: Blob): Promise<{ wav: Blob; seconds: number }> {
+export async function toWav(
+  input: Blob,
+): Promise<{ wav: Blob; seconds: number; silent: boolean }> {
   const bytes = await input.arrayBuffer();
 
   // decodeAudioData handles webm/opus, mp4/AAC and ogg alike — it is the
@@ -43,6 +45,9 @@ export async function toWav(input: Blob): Promise<{ wav: Blob; seconds: number }
   return {
     wav: encodeWav(resampled, TARGET_SAMPLE_RATE),
     seconds: resampled.length / TARGET_SAMPLE_RATE,
+    // Exactly zero, not merely quiet: a muted or OS-blocked microphone hands
+    // over digital silence, while even a silent room has some noise in it.
+    silent: resampled.every((v) => v === 0),
   };
 }
 
