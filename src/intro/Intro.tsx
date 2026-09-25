@@ -146,7 +146,6 @@ export function Intro({ children }: { children: ReactNode }) {
     const canvas = cnv;
 
     const q = <T extends Element>(sel: string) => host.querySelector<T>(sel);
-    const track = q<HTMLElement>(`.${css.track}`)!;
     const pane = q<HTMLElement>(`.${css.pane}`)!;
     const veil = q<HTMLElement>(`.${css.veil}`)!;
     const hero = q<HTMLElement>(`.${css.hero}`)!;
@@ -185,7 +184,14 @@ export function Intro({ children }: { children: ReactNode }) {
     let raf = 0;
     let running = false;
 
-    const maxScroll = () => Math.max(1, track.offsetHeight - window.innerHeight);
+    // The document's own scroll range, not the track's height minus the
+    // window's: under page zoom, or where svh and innerHeight disagree, those
+    // two drift apart, the bottom of the page reads as 83%, and the demo sits
+    // there fully drawn and never becomes clickable.
+    const maxScroll = () => {
+      const doc = document.documentElement;
+      return Math.max(1, doc.scrollHeight - doc.clientHeight);
+    };
 
     function apply(p: number, entrance: number) {
       const vh = window.innerHeight;
@@ -350,11 +356,10 @@ export function Intro({ children }: { children: ReactNode }) {
   }, [landed]);
 
   function skip() {
-    const track = hostRef.current?.querySelector<HTMLElement>(`.${css.track}`);
-    if (!track) return;
     // Scrolled, not jumped: the sequence plays through at speed rather than
-    // cutting, so a visitor who skips still sees where they ended up.
-    window.scrollTo({ top: track.offsetHeight - window.innerHeight, behavior: 'smooth' });
+    // cutting, so a visitor who skips still sees where they ended up. The
+    // browser clamps the overshoot to the true bottom.
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
   }
 
   function replay() {
