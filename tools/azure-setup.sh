@@ -137,6 +137,10 @@ else
       "CORS_ORIGINS=$CORS" \
       'SARVAM_API_KEY=secretref:sarvam-api-key' \
       'GEMINI_API_KEY=secretref:gemini-api-key' \
+      'GEMINI_MODEL=gemini-3-flash-preview' \
+      'GEMINI_FALLBACK_MODELS=gemini-3.1-flash-lite' \
+      'GEMINI_TIMEOUT_SECONDS=45' \
+      'PIPELINE_MAX_STAGE_ATTEMPTS=2' \
     -o none
   # `create` drops the registry block when the image is not from it (the
   # placeholder), and the first real deploy then fails to pull. Set it again.

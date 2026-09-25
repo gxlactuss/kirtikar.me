@@ -129,6 +129,10 @@ jobs:
               'CORS_ORIGINS=https://kirtikar.me,https://www.kirtikar.me,http://localhost:5173' \
               'SARVAM_API_KEY=secretref:sarvam-api-key' \
               'GEMINI_API_KEY=secretref:gemini-api-key' \
+              'GEMINI_MODEL=gemini-3-flash-preview' \
+              'GEMINI_FALLBACK_MODELS=gemini-3.1-flash-lite' \
+              'GEMINI_TIMEOUT_SECONDS=45' \
+              'PIPELINE_MAX_STAGE_ATTEMPTS=2' \
             --output none
 
           fqdn=$(az containerapp show \

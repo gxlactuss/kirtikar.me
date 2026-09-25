@@ -319,6 +319,14 @@ specific:
   CPU/memory pairs, and 4Gi comes with 2 vCPU. Do not round it back down.
 - **`--min-replicas 0`.** What makes the deployment free, and what makes the
   first visit slow. See below.
+- **The Gemini model order.** The demo runs `gemini-3-flash-preview` first
+  and `gemini-3.1-flash-lite` second, not the code default
+  `gemini-3.5-flash`. Measured 2026-09-25 with the same photo and prompt:
+  flash-preview 9-27s, flash-lite 4-18s, and 3.5-flash one success at 54s
+  followed by a 503 that took ~45s to arrive and a 429. With 3.5-flash
+  first, one run spent 90-120s on failed calls, blew the site's 150s poll
+  budget, and the visitor got a recorded run of a different product. The
+  45s per-call timeout and two stage attempts keep a run inside that budget.
 
 One thing that has no equivalent here and needed one on Cloud Run: there is no
 `--no-cpu-throttling` to set. Container Apps does not scope CPU to the lifetime

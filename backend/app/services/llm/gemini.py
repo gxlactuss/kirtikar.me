@@ -184,9 +184,15 @@ class GeminiExtractor:
             # capable but also the busiest, and a listing written from canned
             # facts is worse than one written by a lighter model, so exhaust
             # every real model before falling back to synthetic output.
-            for model_name in self._model_chain():
-                for attempt in range(self.max_attempts):
-                    last_attempt = attempt == self.max_attempts - 1
+            chain = self._model_chain()
+            for model_index, model_name in enumerate(chain):
+                # An overloaded model answers its 503 slowly, measured at around
+                # 45s on the shared Flash tier, so retrying it where a spare
+                # exists spent a minute and a half before the spare was even
+                # asked. Only the last model in the chain gets a second try.
+                attempts_here = self.max_attempts if model_index == len(chain) - 1 else 1
+                for attempt in range(attempts_here):
+                    last_attempt = attempt == attempts_here - 1
                     try:
                         return self._call_gemini_api(
                             transcript,
@@ -204,7 +210,7 @@ class GeminiExtractor:
                             delay = self.retry_backoff_seconds * (2 ** attempt)
                             logger.info(
                                 "Gemini model %s returned %s, retrying in %.1fs (attempt %d/%d)",
-                                model_name, status, delay, attempt + 1, self.max_attempts,
+                                model_name, status, delay, attempt + 1, attempts_here,
                             )
                             time.sleep(delay)
                             continue
@@ -227,7 +233,7 @@ class GeminiExtractor:
                             continue
                         logger.warning(
                             "Gemini model %s unreachable after %d attempts: %s",
-                            model_name, self.max_attempts, e,
+                            model_name, attempts_here, e,
                         )
                         break
                     except Exception as e:
@@ -237,7 +243,7 @@ class GeminiExtractor:
                         logger.warning("Gemini model %s call failed: %s", model_name, e)
                         break
 
-                if len(self._model_chain()) > 1:
+                if len(chain) > 1:
                     logger.info("Falling through to the next Gemini model after %s", model_name)
 
             if allow_synthetic_fallback:

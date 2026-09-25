@@ -474,8 +474,9 @@ def test_a_503_is_retried_rather_than_abandoned(monkeypatch):
 
 def test_an_overloaded_model_falls_through_to_the_next_one(monkeypatch):
     """A lighter model writing the listing beats canned facts writing it."""
-    # Both attempts on the first model fail, the second model answers.
-    attempts = _extractor_with_responses([503, 503], monkeypatch)
+    # The first model is overloaded; with a spare in the chain it is not
+    # retried, because its 503 takes ~45s to arrive. The spare answers.
+    attempts = _extractor_with_responses([503], monkeypatch)
     extractor = GeminiExtractor(
         api_key="k",
         model_name="busy-model",
@@ -487,7 +488,7 @@ def test_an_overloaded_model_falls_through_to_the_next_one(monkeypatch):
         transcript="A blue vase.", allow_synthetic_fallback=True
     )
 
-    assert attempts["count"] == 3
+    assert attempts["count"] == 2
     assert result.used_live_api is True, "should have used the fallback model, not canned facts"
 
 
@@ -513,7 +514,9 @@ def test_every_model_exhausted_falls_back_to_canned_facts(monkeypatch):
         transcript="A blue vase.", allow_synthetic_fallback=True
     )
 
-    assert attempts["count"] == 4  # two models, two attempts each
+    # One try on the first model, and the last model in the chain keeps its
+    # second attempt.
+    assert attempts["count"] == 3
     # used_live_api stays False so a caller can tell a working demo from a
     # silent failure.
     assert result.used_live_api is False
