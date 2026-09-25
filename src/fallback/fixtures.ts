@@ -58,20 +58,23 @@ export function loadFixture(slug: string): Promise<Fixture | null> {
 }
 
 /**
- * Picks a fixture for the chosen photo, falling back to any available one.
+ * Picks the fixture recorded for this photo, or else a finished run.
  *
- * An uploaded photo has no fixture of its own, so it borrows another —
- * which is exactly why the badge says "a recorded run", and why the fixture
- * carries its own images rather than reusing what the visitor uploaded.
+ * Most photos have no recording of their own (every upload, and any catalog
+ * photo added since the last capture), so they borrow one. It borrows a
+ * `ready` run on purpose: the point of the fallback is to show what a
+ * finished product looks like. That is why the badge and the explainer say
+ * a recorded run on a different photo, and why the fixture carries its own
+ * images rather than reusing the visitor's.
  */
-export async function pickFixture(slugs: string[]): Promise<Fixture | null> {
-  for (const slug of slugs) {
+export async function pickFixture(slug: string | undefined): Promise<Fixture | null> {
+  if (slug) {
     const hit = await loadFixture(slug);
     if (hit) return hit;
   }
   const index = await fixtureIndex();
-  const first = index[0];
-  return first ? loadFixture(first.slug) : null;
+  const pick = index.find((e) => e.state === 'ready') ?? index[0];
+  return pick ? loadFixture(pick.slug) : null;
 }
 
 /** Rewrites relative image paths so they resolve under the site's base. */

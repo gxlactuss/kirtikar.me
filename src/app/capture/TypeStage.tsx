@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 import { copy } from '../../copy/en';
-import { CRAFT_BY_SLUG } from '../crafts';
 import { dispatch, useDemo } from '../../machine/store';
 import { BigActionButton } from '../widgets/BigActionButton';
 import { Scaffold } from '../widgets/Scaffold';
 import { ScreenHeader } from '../widgets/ScreenHeader';
+import { VoiceGuide } from './VoiceGuide';
 import css from './voice.module.css';
 
 const MIN_CHARS = 12;
@@ -18,10 +18,9 @@ const MIN_CHARS = 12;
  * Useful for a judge on a laptop with no microphone, or in a noisy hall.
  */
 export function TypeStage() {
-  const { photos, typed } = useDemo();
+  const { typed } = useDemo();
   const [text, setText] = useState(typed ?? '');
 
-  const hint = photos[0] ? CRAFT_BY_SLUG.get(photos[0].slug)?.hint : undefined;
   const ready = text.trim().length >= MIN_CHARS;
 
   return (
@@ -29,7 +28,7 @@ export function TypeStage() {
       leading="back"
       onLeading={() => dispatch({ t: 'goCapture', stage: 'voiceRecord' })}
       step={2}
-      stepCount={2}
+      stepCount={3}
       actions={
         <BigActionButton
           label={copy.demo.typeConfirm}
@@ -48,13 +47,15 @@ export function TypeStage() {
         className={css.textarea}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={hint ?? copy.demo.typeHint}
+        placeholder={copy.demo.typeHint}
         maxLength={600}
         autoFocus
       />
       <p className={css.counter}>
         {ready ? `${text.trim().length} characters` : `At least ${MIN_CHARS} characters`}
       </p>
+
+      <VoiceGuide />
     </Scaffold>
   );
 }

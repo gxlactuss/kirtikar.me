@@ -67,6 +67,11 @@ export class PipelineTicker {
     return this.stages.reduce((n, s) => n + s.nominalMs, 0);
   }
 
+  /** True once the clock has moved; retime() is refused from then on. */
+  get started(): boolean {
+    return this.running || this.virtual > 0;
+  }
+
   /**
    * Replace the stage timings before starting.
    *
@@ -76,7 +81,7 @@ export class PipelineTicker {
    * mid-run would make the bar jump.
    */
   retime(stages: readonly StageSpec[]): void {
-    if (this.running || this.virtual > 0) {
+    if (this.started) {
       throw new Error('retime() must be called before the ticker starts');
     }
     this.stages = stages;

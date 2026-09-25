@@ -2,21 +2,19 @@ import { useEffect, useRef } from 'react';
 
 import { store, useDemo } from '../machine/store';
 import { run } from '../machine/run';
-import { PhotoSetStage } from './capture/PhotoSetStage';
+import { PickStage } from './capture/PickStage';
 import { VoiceRecordStage } from './capture/VoiceRecordStage';
 import { TypeStage } from './capture/TypeStage';
 import { ProcessingStage } from './progress/ProcessingStage';
-import { NeedsAttentionStage } from './review/NeedsAttentionStage';
-import { ReadBackStage } from './review/ReadBackStage';
-import { SuggestionsStage } from './review/SuggestionsStage';
-import { PriceStage } from './review/PriceStage';
-import { StockStage } from './review/StockStage';
-import { PhotosStage } from './review/PhotosStage';
-import { PreviewStage } from './review/PreviewStage';
-import { ConsentStage } from './review/ConsentStage';
-import { PublishStage } from './review/PublishStage';
+import { MissingStage } from './result/MissingStage';
+import { FinalStage } from './result/FinalStage';
 
-/** Routes the machine's current screen, and starts the run on submit. */
+/**
+ * Routes the machine's current screen, and starts the run on submit.
+ *
+ * Four steps: one photo, one voice note, typed answers for anything the
+ * voice note left out, and the finished product.
+ */
 export function DemoApp() {
   const { screen } = useDemo();
   const started = useRef(false);
@@ -43,36 +41,16 @@ export function DemoApp() {
         case 'typing':
           return <TypeStage />;
         default:
-          return <PhotoSetStage />;
+          return <PickStage />;
       }
 
     case 'processing':
       return <ProcessingStage />;
 
-    case 'review':
-      switch (screen.stage) {
-        case 'needsAttention':
-          return <NeedsAttentionStage />;
-        case 'readBack':
-          return <ReadBackStage />;
-        case 'suggestions':
-          return <SuggestionsStage />;
-        case 'price':
-          return <PriceStage />;
-        case 'stock':
-          return <StockStage />;
-        case 'photos':
-          return <PhotosStage />;
-        case 'preview':
-          return <PreviewStage />;
-        case 'consent':
-          return <ConsentStage />;
-        case 'publishing':
-          return <PublishStage />;
-      }
-      return <ReadBackStage />;
+    case 'missing':
+      return <MissingStage />;
 
-    case 'published':
-      return <PublishStage />;
+    case 'final':
+      return <FinalStage />;
   }
 }

@@ -2,7 +2,7 @@
  * Records real pipeline runs and writes them to public/fixtures/.
  *
  * A fixture is not invented data: it is what the backend actually produced
- * for one of the bundled craft photos, replayed later at its own measured
+ * for one of the ready-made product photos, replayed later at its own measured
  * pace. That is the whole basis on which the demo can claim a fallback run
  * shows the real pipeline, so this tool only ever writes what it received.
  *
@@ -11,17 +11,16 @@
  *   API_BASE=http://localhost:8000 \
  *   node --experimental-strip-types tools/capture-fixtures.mts pottery weaving
  *
- * With no slugs it captures every craft in src/app/crafts.ts. Each run needs
- * a spoken sentence: supply one WAV per slug at fixtures-audio/<slug>.wav, or
- * pass --audio <file> to reuse a single recording for every capture. The
- * craft's own `hint` is what should be read aloud.
+ * A slug is a file name in src/assets/products/ without its extension. With
+ * no slugs it captures every product there. Each run needs a spoken
+ * sentence: supply one WAV per slug at fixtures-audio/<slug>.wav, or pass
+ * --audio <file> to reuse a single recording for every capture.
  */
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 
-import { CRAFTS } from '../src/app/crafts.ts';
 import type { Listing, ListingStatusResponse } from '../src/api/types.ts';
 import { TERMINAL_STATES } from '../src/api/types.ts';
 
@@ -44,14 +43,20 @@ if (audioFlag !== -1 && !sharedAudio) {
   process.exit(1);
 }
 
-const unknown = slugs.filter((s) => !CRAFTS.some((c) => c.slug === s));
+const PRODUCTS_DIR = 'src/assets/products';
+const products = (await readdir(PRODUCTS_DIR))
+  .filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
+  .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  .map((file) => ({ slug: file.replace(/\.[^.]+$/, ''), file }));
+
+const unknown = slugs.filter((s) => !products.some((p) => p.slug === s));
 if (unknown.length) {
-  console.error(`Unknown craft: ${unknown.join(', ')}`);
-  console.error(`Known slugs: ${CRAFTS.map((c) => c.slug).join(', ')}`);
+  console.error(`Unknown product: ${unknown.join(', ')}`);
+  console.error(`Known slugs: ${products.map((p) => p.slug).join(', ') || '(none)'}`);
   process.exit(1);
 }
 
-const targets = slugs.length ? CRAFTS.filter((c) => slugs.includes(c.slug)) : [...CRAFTS];
+const targets = slugs.length ? products.filter((p) => slugs.includes(p.slug)) : products;
 
 interface IndexEntry {
   slug: string;
@@ -81,7 +86,7 @@ async function audioFor(slug: string): Promise<{ bytes: Buffer; name: string }> 
   const path = sharedAudio ?? join('fixtures-audio', `${slug}.wav`);
   if (!existsSync(path)) {
     throw new Error(
-      `No audio for "${slug}". Record the craft's hint to ${path}, or pass --audio <file>.`,
+      `No audio for "${slug}". Record a description to ${path}, or pass --audio <file>.`,
     );
   }
   return { bytes: await readFile(path), name: basename(path) };
@@ -151,11 +156,10 @@ async function localiseImages(slug: string, listing: Listing): Promise<string[]>
   return out;
 }
 
-async function capture(slug: string, hint: string): Promise<IndexEntry | null> {
+async function capture(slug: string, file: string): Promise<IndexEntry | null> {
   console.log(`\n=== ${slug} ===`);
-  console.log(`  hint: ${hint}`);
 
-  const photo = await readFile(join('public/crafts', `${slug}.jpg`));
+  const photo = await readFile(join(PRODUCTS_DIR, file));
   const audio = await audioFor(slug);
 
   const created = await api<Listing>('POST', `${V1}/listings`, {
@@ -166,7 +170,7 @@ async function capture(slug: string, hint: string): Promise<IndexEntry | null> {
 
   // Audio last: the server starts the pipeline once it has an image, an
   // audio file and the expected photo count.
-  await upload(created.id, photo, `${slug}.jpg`, 'image');
+  await upload(created.id, photo, file, 'image');
   await upload(created.id, audio.bytes, audio.name, 'audio');
 
   const { state, ms } = await awaitPipeline(created.id);
@@ -215,12 +219,12 @@ const existing: IndexEntry[] = existsSync(indexPath)
   : [];
 
 const captured: IndexEntry[] = [];
-for (const craft of targets) {
+for (const product of targets) {
   try {
-    const entry = await capture(craft.slug, craft.hint);
+    const entry = await capture(product.slug, product.file);
     if (entry) captured.push(entry);
   } catch (error) {
-    console.error(`  FAILED ${craft.slug}: ${(error as Error).message}`);
+    console.error(`  FAILED ${product.slug}: ${(error as Error).message}`);
   }
 }
 

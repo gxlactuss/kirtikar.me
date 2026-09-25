@@ -16,7 +16,7 @@ import css from './processing.module.css';
  * machine/ticker.ts for the rules that keeps honest.
  */
 export function ProcessingStage() {
-  const { progress, photos, provenance, error } = useDemo();
+  const { progress, photo, provenance, error } = useDemo();
   const uploading = progress.queue.kind === 'uploading';
 
   // Both the live call and the recorded replay failed. The ticker has
@@ -42,11 +42,9 @@ export function ProcessingStage() {
         subtitle={copy.demo.processingBody}
       />
 
-      {photos.length ? (
+      {photo ? (
         <div className={css.thumbs}>
-          {photos.map((p) => (
-            <img className={css.thumb} key={p.url} src={p.url} alt="" />
-          ))}
+          <img className={css.thumb} src={photo.url} alt="" />
         </div>
       ) : null}
 

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { copy } from '../../copy/en';
 import { MAX_SECONDS, Recorder, RecorderError, micBlockedReason } from '../../audio/recorder';
-import { CRAFT_BY_SLUG } from '../crafts';
 import { dispatch, useDemo } from '../../machine/store';
 import { BigActionButton } from '../widgets/BigActionButton';
 import { HoldToSpeakButton } from '../widgets/HoldToSpeakButton';
@@ -10,16 +9,17 @@ import { Icon } from '../widgets/Icon';
 import { Scaffold } from '../widgets/Scaffold';
 import { ScreenHeader } from '../widgets/ScreenHeader';
 import { Waveform, WaveformPeaks } from '../widgets/Waveform';
+import { VoiceGuide } from './VoiceGuide';
 import css from './voice.module.css';
 
 /**
- * "Now say what it is" — the heart of the app.
+ * Step 2, "Now say what it is": one voice note of at most 30 seconds.
  *
  * The recording is converted to 22.05 kHz mono WAV before it leaves the
  * browser; see src/audio/wav.ts for why that is not optional.
  */
 export function VoiceRecordStage() {
-  const { photos, voice } = useDemo();
+  const { voice } = useDemo();
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [recording, setRecording] = useState(false);
@@ -95,15 +95,14 @@ export function VoiceRecordStage() {
     }
   };
 
-  const hint = photos[0] ? CRAFT_BY_SLUG.get(photos[0].slug)?.hint : undefined;
   const shown = Math.min(MAX_SECONDS, Math.floor(elapsed));
 
   return (
     <Scaffold
       leading="back"
-      onLeading={() => dispatch({ t: 'goCapture', stage: 'photoSet' })}
+      onLeading={() => dispatch({ t: 'goCapture', stage: 'pick' })}
       step={2}
-      stepCount={2}
+      stepCount={3}
       actions={
         <>
           {blocked ? null : (
@@ -116,7 +115,7 @@ export function VoiceRecordStage() {
           )}
           {voice ? (
             <BigActionButton
-              label="This is right"
+              label={copy.playbackAccept}
               icon="check"
               onClick={() => dispatch({ t: 'submit' })}
             />
@@ -131,13 +130,6 @@ export function VoiceRecordStage() {
       }
     >
       <ScreenHeader title={copy.voiceTitle} subtitle={copy.voiceBody} />
-
-      {hint ? (
-        <div className={css.prompt}>
-          <p className={css.promptLabel}>Something you could say</p>
-          <p className={css.promptText}>“{hint}”</p>
-        </div>
-      ) : null}
 
       <Waveform level={recording ? level : 0} active={recording} />
 
@@ -184,6 +176,8 @@ export function VoiceRecordStage() {
           />
         </>
       ) : null}
+
+      <VoiceGuide />
     </Scaffold>
   );
 }

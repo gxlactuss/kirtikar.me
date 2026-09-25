@@ -1,130 +1,153 @@
 /* Capture screens. px only. */
 
-.empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: center;
-  color: var(--muted);
-  padding: 24px var(--gutter);
-}
+/* --- the chosen photo --- */
 
-.emptyIcon {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: var(--border-width) solid var(--border);
-  display: grid;
-  place-items: center;
-  color: var(--marigold);
-}
-
-.emptyText {
-  font-size: 18px;
-  line-height: 1.45;
-  margin: 0;
-  max-width: 260px;
-}
-
-/* --- photo set --- */
-
-.photoList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.photoRow {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 10px;
-  border-radius: var(--radius);
-  border: var(--border-width) solid var(--border);
-  background: var(--surface);
-}
-
-.thumb {
-  width: 76px;
-  height: 76px;
-  border-radius: 10px;
-  object-fit: cover;
+.chosen {
+  /* overflow: hidden makes its min-height 0, and the scrolling body would
+   * otherwise squash it to a line. */
   flex-shrink: 0;
+  margin: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: var(--border-width) solid var(--terracotta);
+  background: var(--surface);
+}
+
+.chosenImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   background: var(--border);
 }
 
-.photoMeta {
-  flex: 1;
-  min-width: 0;
+.chosenCaption {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.photoTitle {
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
   font-size: 18px;
   font-weight: 600;
   color: var(--ink);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.photoNote {
+.chosenTick {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+/* --- the catalog --- */
+
+.sectionLabel {
   font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--muted);
+  margin: 4px 0 -6px;
 }
 
-.star {
-  color: var(--marigold);
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
-.removeButton {
-  width: 48px;
-  height: 48px;
+@container phone (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: var(--border-width) solid var(--border);
+  background: var(--surface);
+  transition: border-color var(--fast) var(--standard);
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--marigold);
+}
+
+.tile[aria-pressed='true'] {
+  border: 3px solid var(--terracotta);
+}
+
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tileTick {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--terracotta);
+  color: #fff;
   display: grid;
   place-items: center;
+}
+
+.tileLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14px 6px 5px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptySlot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
   border-radius: 10px;
+  border: var(--border-width) dashed var(--border);
+  color: var(--muted);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- shared --- */
+
+.error {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--danger-tint);
+  border: var(--border-width) solid var(--danger);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.errorIcon {
   color: var(--danger);
   flex-shrink: 0;
 }
 
-.removeButton:hover {
-  background: var(--danger-tint);
-}
-
-/* --- info panel (lightbulb) --- */
-
-.infoPanel {
-  display: flex;
-  gap: 12px;
-  padding: 14px;
-  border-radius: var(--radius);
-  background: var(--warning-tint);
-  border: var(--border-width) solid var(--border);
-}
-
-.infoIcon {
-  color: var(--marigold);
-  flex-shrink: 0;
-}
-
-.infoText {
-  font-size: 16px;
-  line-height: 1.4;
-  color: var(--ink);
-  margin: 0;
-}
-
-.infoText ul {
-  margin: 6px 0 0;
-  padding-left: 18px;
-}
-
-.infoText li {
-  margin-bottom: 3px;
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }

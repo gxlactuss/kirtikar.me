@@ -11,29 +11,6 @@
  */
 
 export const copy = {
-  // --- capture ---
-  captureTitle: 'Add a product',
-  capturePhotoStep: (current: number, total: number) => `Photo ${current} of ${total}`,
-  capturePhotoWhole: 'Show the whole product',
-  capturePhotoDetail: 'Take one from close up',
-  capturePhotoScale: 'Put a hand beside it, so the size shows',
-  captureFromGallery: 'Choose from gallery',
-
-  shotReviewChecking: 'Checking the photo…',
-  shotReviewRetake: 'Take it again',
-
-  photoSetTitle: 'Your three photos',
-  photoSetBody:
-    'The first photo is the one buyers see first. Press a photo to take it again.',
-  photoSetMain: 'First photo',
-  photoSetConfirm: 'These photos are good',
-
-  photoIssueTooDark: 'Too dark to see clearly',
-  photoIssueTooBright: 'Too much light on it',
-  photoIssueBlurry: 'Blurry, not clear enough',
-  photoIssueNoSubject: 'No product seen in this photo',
-  photoIssueOutOfFrame: 'Product not fully in the photo',
-
   // --- voice ---
   voiceTitle: 'Now say what it is',
   voiceBody:
@@ -44,13 +21,17 @@ export const copy = {
   voiceTooShort: 'That was very short. Hold the button and speak again.',
   voiceFailed:
     'The microphone did not start. Check that this app is allowed to use it.',
-  voiceBackToPhotos: 'Back to the photos',
+  playbackAccept: 'This is right',
 
-  // --- saved ---
-  savedTitle: 'Saved',
-  savedBodyOnline: 'It is being sent now. You do not have to wait here.',
-  savedAddAnother: 'Add another product',
-  savedGoHome: 'Go to the home screen',
+  // --- voice guide (voice_record_stage.dart _guidePoints, in the app's order) ---
+  voiceGuideTitle: 'Things you can talk about',
+  voiceGuidePoints: [
+    'Name of the item', // voiceGuideWhat
+    'Colour', // voiceGuideColour
+    'Height', // voiceGuideSize
+    'Time taken to make it', // voiceGuideTime
+    'What the materials cost', // voiceGuideCost
+  ],
 
   // --- queue / progression ---
   queueStateWaiting: 'Waiting for a network',
@@ -61,14 +42,7 @@ export const copy = {
   // --- needs attention ---
   attentionTitle: 'One question',
   attentionBody: 'We understood everything else. Only this is missing.',
-  attentionRetakePhotos: 'Take the photos again',
   attentionStartAgain: 'Start again',
-
-  // --- read back ---
-  readBackTitle: 'This is what we understood',
-  readBackFields: 'What we wrote down',
-  readBackCorrect: 'Press anything that is wrong',
-  readBackApprove: 'All of this is right',
 
   // --- fact sheet field labels ---
   fieldMaterial: 'Made of',
@@ -76,67 +50,16 @@ export const copy = {
   fieldColour: 'Colour',
   fieldTechnique: 'How it was made',
   fieldOrigin: 'Where it was made',
-  fieldQuantity: 'How many',
   fieldPrice: 'Price',
   correctTypeHint: 'Type the answer here',
-
-  // --- suggestions ---
-  suggestTitle: 'Shall we add this?',
-  suggestYes: 'Yes, add it',
-  suggestNo: 'No, leave it out',
-  suggestSkip: 'I am not sure',
-  suggestProgress: (current: number, total: number) => `${current} of ${total}`,
 
   // --- price ---
   priceTitle: 'What is the price?',
   priceBody: 'This is for one piece.',
-  priceFloor: (amount: string) => `What it cost you: ${amount}`,
-  priceFloorExplain:
-    'Your materials and your time come to this much. Selling below it means you lose money on the work.',
-  priceBand: (low: string, high: string) =>
-    `Others sell this kind of thing for ${low} to ${high}`,
-  priceBelowFloor: 'This is below what it cost you to make. You can still choose it.',
-  priceConfirm: 'This price is right',
-
-  // --- stock ---
-  stockTitle: 'How many do you have?',
-  stockBody: 'When they are all sold, we take the listing down for you.',
-  stockOneOfAKind: 'There is only one, and there will never be another',
-  stockMore: 'One more',
-  stockLess: 'One less',
-
-  // --- photos / preview ---
-  photosTitle: 'Which photo comes first?',
-  previewTitle: 'This is what buyers will see',
-
-  // --- consent ---
-  consentTitle: 'May we put this up for sale?',
-  consentPhoto: 'Show my photos',
-  consentPhotoExplain: "The photographs of your product go on the buyer's screen.",
-  consentStory: 'Show my craft story',
-  consentStoryExplain:
-    'Your name, your village and how you make things go on the maker card. You can say no and still sell.',
-  consentNeeded: 'We cannot put it up without the photos.',
-  consentPublish: 'Put it up for sale',
-
-  // --- publishing ---
-  publishingTitle: 'Putting it up for sale',
-  publishingBody: 'This takes a moment. Do not close the app.',
-  publishedTitle: 'It is up for sale',
-  publishedBody: 'Buyers can see it now.',
-  publishedShare: 'Send it on WhatsApp',
-  publishedCopyLink: 'Copy the link',
-  publishedLinkCopied: 'The link is copied',
-  publishedQrExplain: 'Anyone can point their phone at this to open your product.',
-  publishedAnother: 'Make another like this',
-  publishedDone: 'Go to the home screen',
-  publishFailed: 'It could not be put up. Nothing is lost — you can try again.',
-  publishRetry: 'Try again',
 
   // --- misc ---
   actionDone: 'Done',
   listingNoPrice: 'Price not said',
-  notSaid: 'Not said',
 
   /**
    * Strings that exist only on the web demo. The server-side pipeline stages
@@ -145,10 +68,13 @@ export const copy = {
    */
   demo: {
     pickTitle: 'Pick a product',
-    pickBody: 'Choose a photo, or use one of your own.',
+    pickBody: (catalog: boolean) =>
+      catalog ? 'Use a photo of your own, or choose one of ours.' : 'Use a photo of your own.',
     pickOwn: 'Use my own photo',
-    pickConfirm: 'Use these photos',
-    pickCount: (n: number) => (n === 1 ? '1 photo chosen' : `${n} photos chosen`),
+    pickOwnAgain: 'Use a different photo of mine',
+    pickCatalog: 'Or choose one',
+    pickConfirm: 'Use this photo',
+    uploadUnreadable: 'That file could not be opened as a photo. Try a JPEG or PNG.',
 
     typeInstead: 'Type it instead',
     typeTitle: 'Now write what it is',
@@ -172,10 +98,41 @@ export const copy = {
     processingFailedTitle: 'That did not work',
     processingFailedAction: 'Start again',
 
+    // --- step 3: what the voice note left out ---
+    missingTitle: (n: number) => (n === 1 ? 'One question' : 'A few questions'),
+    missingBody: (n: number) =>
+      n === 1
+        ? 'We understood everything else. Only this is missing.'
+        : 'We understood everything else. Only these are missing.',
+    missingSkip: 'Leave out anything you do not know.',
+    missingMaterial: 'What is it made of?',
+    missingSize: 'How big is it?',
+    missingSizeHint: 'For example: 9 inches tall',
+    missingColour: 'What colour is it?',
+    missingOrigin: 'Where was it made?',
+    missingOriginHint: 'Village, town or state',
+    missingPriceHint: (suggested: string) => `We suggest ${suggested}`,
+    missingPriceInvalid: 'Type the price as a number, like 1200.',
+    missingConfirm: 'Show my product',
+    missingSaveFailed: 'Your answers did not go through. Please try again.',
+    photoNote: 'About the photo',
+
+    haltedTitle: 'We could not finish this one',
+
+    // --- step 4: the finished product ---
+    finalTitle: 'This is your product',
+    finalBody: 'Written from your photo and your voice.',
+    finalSuggestedPrice: 'Suggested price',
+    finalAnother: 'Make another product',
+
     demoDataPill: 'Demo data',
-    demoDataExplain: (date: string) =>
-      `The live service did not answer in time. This is a recorded run of the same pipeline on this same photo, from ${date}.`,
+    demoDataExplain: (date: string, samePhoto: boolean) =>
+      samePhoto
+        ? `The live service did not answer in time. This is a recorded run of the same pipeline on this same photo, from ${date}.`
+        : `The live service did not answer in time. This is a recorded run of the same pipeline on a different photo, from ${date}.`,
     offlineModelPill: 'Offline model',
+    offlineModelExplain:
+      'The photo and the voice note went through the real pipeline, but the writing model was unavailable, so the words below come from its offline fallback.',
   },
 } as const;
 

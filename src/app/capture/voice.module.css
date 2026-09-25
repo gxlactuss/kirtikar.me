@@ -96,28 +96,53 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- the read-aloud prompt --- */
+/* --- "Things you can talk about", from voice_record_stage.dart _GuidePanel --- */
 
-.prompt {
-  padding: 14px;
+.guide {
+  padding: 16px;
   border-radius: var(--radius);
-  background: var(--warning-tint);
+  background: var(--surface);
   border: var(--border-width) solid var(--border);
 }
 
-.promptLabel {
-  font-size: 13px;
+.guideTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--marigold);
-  margin: 0 0 6px;
+  color: var(--ink);
+  margin: 0 0 12px;
 }
 
-.promptText {
-  font-size: 17px;
-  line-height: 1.45;
-  color: var(--ink);
+.guideIcon {
+  color: var(--marigold);
+  flex-shrink: 0;
+}
+
+.guideList {
+  list-style: none;
   margin: 0;
-  font-style: italic;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guideList li {
+  display: flex;
+  gap: 10px;
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.guideList li::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--terracotta);
+  flex-shrink: 0;
 }

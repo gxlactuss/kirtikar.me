@@ -94,8 +94,8 @@ async function live(
   ticker: PipelineTicker,
   signal: AbortSignal,
 ): Promise<RunResult> {
-  const { photos, voice, typed } = store.peek();
-  if (photos.length === 0) throw new Error('No photos were chosen');
+  const { photo, voice, typed } = store.peek();
+  if (!photo) throw new Error('No photo was chosen');
 
   const clientItemId = crypto.randomUUID();
 
@@ -103,7 +103,7 @@ async function live(
   await untilAwake(store, signal);
   const created = await api.createListing(
     clientItemId,
-    { description: typed, photoCount: photos.length },
+    { description: typed, photoCount: 1 },
     signal,
   );
 
@@ -111,11 +111,7 @@ async function live(
   // handler once it has an image, an audio file and the expected photo
   // count, so the final response is an unambiguous t-zero for the ticker.
   const parts = [
-    ...photos.map((p, i) => ({
-      blob: p.blob,
-      name: `photo_${i + 1}.jpg`,
-      type: 'image' as const,
-    })),
+    { blob: photo.blob, name: 'photo_1.jpg', type: 'image' as const },
     ...(voice
       ? [{ blob: voice.wav, name: 'voice.wav', type: 'audio' as const }]
       : []),
@@ -162,7 +158,7 @@ async function live(
   };
 }
 
-function withAbsoluteImages(listing: Listing): Listing {
+export function withAbsoluteImages(listing: Listing): Listing {
   return { ...listing, image_urls: listing.image_urls.map((u) => api.mediaUrl(u)) };
 }
 
@@ -174,14 +170,20 @@ async function replay(
   reason: FallbackReason,
   signal: AbortSignal,
 ): Promise<RunResult> {
-  const { photos } = store.peek();
-  const fixture = await pickFixture(photos.map((p) => p.slug));
+  const { photo } = store.peek();
+  const fixture = await pickFixture(photo?.slug);
   if (!fixture) throw new Error('No fixtures are bundled');
 
   // Pace the replay by what this run actually took when it was recorded.
-  ticker.retime(
-    STAGES.map((s) => ({ ...s, nominalMs: fixture.stageMs[s.id] ?? s.nominalMs })),
-  );
+  // A live run that died mid-pipeline (the server restarted, say) has
+  // already started the clock, and retime() refuses a running ticker, which
+  // used to turn exactly the failure this fallback exists for into "That did
+  // not work". The bar just carries on at its current pace instead.
+  if (!ticker.started) {
+    ticker.retime(
+      STAGES.map((s) => ({ ...s, nominalMs: fixture.stageMs[s.id] ?? s.nominalMs })),
+    );
+  }
 
   store.dispatch({ t: 'queue', queue: { kind: 'processing' } });
   ticker.start();
