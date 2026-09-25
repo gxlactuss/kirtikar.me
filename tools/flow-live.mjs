@@ -164,7 +164,19 @@ if (/This is your product/.test(h)) {
   console.log('      ' + card.replace(/\n+/g, '\n      '));
   const img = page.locator('article img');
   if (await img.count()) {
-    const ok = await img.evaluate((el) => el.complete && el.naturalWidth > 0);
+    // The processed image comes from the API's region, not the site's, and
+    // takes a moment; wait for it rather than judging a half-drawn frame.
+    const ok = await img
+      .evaluate(
+        (el) =>
+          new Promise((resolve) => {
+            if (el.complete) return resolve(el.naturalWidth > 0);
+            el.addEventListener('load', () => resolve(true), { once: true });
+            el.addEventListener('error', () => resolve(false), { once: true });
+            setTimeout(() => resolve(false), 15_000);
+          }),
+      )
+      .catch(() => false);
     check('product image loads', ok, await img.getAttribute('src'));
   }
   check('no ONDC or publishing step', !/ONDC|Put it up for sale|QR/i.test(await page.locator('body').innerText()));
