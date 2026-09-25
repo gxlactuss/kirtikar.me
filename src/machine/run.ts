@@ -238,6 +238,8 @@ function reasonFor(error: unknown): FallbackReason {
   if (error instanceof TimeoutError) return 'create-failed';
   if (error instanceof NetworkError) return 'network';
   if (error instanceof NotJsonError) return 'cold-start';
+  // The backend's shared daily cap on live runs (backend/app/core/demo_limit.py).
+  if (error instanceof HttpError && error.status === 429) return 'daily-limit';
   if (error instanceof HttpError) return error.status >= 500 ? 'server-error' : 'create-failed';
   return 'create-failed';
 }

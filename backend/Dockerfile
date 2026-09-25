@@ -49,6 +49,7 @@ ENV DEMO_MODE=true \
     ENVIRONMENT=demo \
     DATABASE_URL=sqlite:////home/app/data/kirtikar.db \
     MEDIA_STORAGE_DIR=/home/app/data/media \
+    DEMO_LIMIT_STATE_PATH=/home/app/data/demo-limit.json \
     PIPELINE_MAX_STAGE_ATTEMPTS=2
 
 EXPOSE 7860
@@ -57,7 +58,7 @@ HEALTHCHECK --interval=60s --timeout=5s --start-period=90s --retries=3 \
     CMD curl -fsS http://localhost:7860/health || exit 1
 
 # One worker, deliberately. The pipeline is dispatched through FastAPI's
-# BackgroundTasks, the demo's rate limit counts in process memory, and the
+# BackgroundTasks, the demo's daily cap counts in process memory, and the
 # database is a single SQLite file — all three assume one process, and a
 # second worker would quietly break all three at once.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]

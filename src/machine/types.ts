@@ -58,6 +58,7 @@ export type FallbackReason =
   | 'upload-failed'
   | 'poll-timeout'
   | 'server-error'
+  | 'daily-limit'
   | 'network'
   | 'forced';
 

@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 import uuid
 
-from fastapi import APIRouter, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
 from app.core.config import settings
+from app.core.demo_limit import demo_rate_limit
 from app.services.llm.gemini import GeminiExtractor
 from app.services.pipeline.context import (
     FactSheetOutput,
@@ -30,6 +31,8 @@ router = APIRouter(prefix="/voice", tags=["Voice Demo"])
     status_code=status.HTTP_200_OK,
     summary="Interactive Voice-to-Catalog Tester",
     description="Upload or speak a voice note and observe the full Sarvam AI -> Gemini 2.0 Flash -> Modular Sheet -> Multi-Channel syndication pipeline.",
+    # Spends the same credit as a listing run, so it draws on the same daily cap.
+    dependencies=[Depends(demo_rate_limit)],
 )
 async def voice_to_catalog_demo(
     file: UploadFile = File(...),

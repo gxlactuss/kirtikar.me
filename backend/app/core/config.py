@@ -48,11 +48,14 @@ class Settings(BaseSettings):
     # listings live.
     DEMO_MODE: bool = False
     DEMO_SELLER_NAME: str = "Kirtikar Demo"
-    # Runs one address may start per hour before the demo refuses. Every run
-    # spends real Sarvam and Gemini credit and the endpoint is unauthenticated,
-    # so this is what stands between one scraper and a month's quota. 0 is no
-    # limit.
-    DEMO_MAX_RUNS_PER_HOUR: int = 20
+    # Live runs the demo will start per IST calendar day, across every visitor
+    # combined. The site is only for the SIH judges, and every run spends real
+    # Sarvam and Gemini credit on an unauthenticated endpoint. Past the cap the
+    # site falls back to a recorded run. 0 is no limit.
+    DEMO_MAX_RUNS_PER_DAY: int = 10
+    # Where today's count is mirrored so a restart doesn't reset it. Only
+    # durable if this is on storage that outlives the container.
+    DEMO_LIMIT_STATE_PATH: Union[str, None] = None
 
     # AI & Speech Service configuration
     SARVAM_API_KEY: Union[str, None] = None

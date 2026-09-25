@@ -1,79 +1,116 @@
-"""A per-address cap on how many demo runs one visitor may start.
+"""A global cap on how many demo runs everyone combined may start in a day.
 
-The demo's create endpoint is unauthenticated by design, and every listing it
-accepts goes on to spend real Sarvam and Gemini credit. One script pointed at
-it could drain a month's quota in an afternoon and leave the judges looking at
-a fallback. This is the cheapest thing that prevents that without putting a
-login in front of a demo whose whole point is that there isn't one.
+The demo's run endpoints are unauthenticated by design, and every run they
+accept spends real Sarvam and Gemini credit. The site is only meant for the
+SIH judges, so the budget is sized for them rather than for the public: a
+small number of runs per calendar day across all visitors, after which the
+endpoints refuse with a 429 and the site falls back to a recorded run.
 
-It is a sliding window held in process memory. That is the right size for a
-single-container demo: it costs nothing, it needs no Redis, and the worst case
-when the container restarts is that a handful of visitors get their allowance
-back. It is not a general rate limiter and should not be mistaken for one.
+The day is the Indian calendar day (IST, UTC+05:30, no daylight saving), so
+the allowance resets at midnight for the people who will be using it.
+
+The count is kept in process memory and, when DEMO_LIMIT_STATE_PATH is set,
+mirrored to a small JSON file so a restart does not hand out a fresh day's
+allowance. That only holds if the file sits on storage that outlives the
+container; on the image's own ephemeral disk a scale-to-zero still resets it.
 """
+import json
+import logging
+import os
 import threading
-import time
-from collections import defaultdict, deque
-from typing import Deque, Dict
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Optional, Tuple
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, status
 
 from app.core.config import settings
 
-WINDOW_SECONDS = 3600
+logger = logging.getLogger(__name__)
 
-_hits: Dict[str, Deque[float]] = defaultdict(deque)
+IST = timezone(timedelta(hours=5, minutes=30))
+
 _lock = threading.Lock()
+_day: Optional[str] = None
+_count = 0
+_loaded = False
 
 
-def _client_key(request: Request) -> str:
-    """The visitor's address, as seen from behind the platform's proxy.
-
-    A Space sits behind a reverse proxy, so `request.client.host` is the
-    proxy's address and would put every visitor in the world into one bucket.
-    The first entry of X-Forwarded-For is the original client. It is trivially
-    spoofable — which is acceptable here, because the cap protects an API
-    budget rather than anything a forged header could reach.
-    """
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first
-    return request.client.host if request.client else "unknown"
+def _now() -> datetime:
+    return datetime.now(IST)
 
 
-def demo_rate_limit(request: Request) -> None:
-    """Refuse a create once this address has had its hour's worth."""
-    limit = settings.DEMO_MAX_RUNS_PER_HOUR
+def _state_path() -> Optional[Path]:
+    path = settings.DEMO_LIMIT_STATE_PATH
+    return Path(path) if path else None
+
+
+def _load() -> Tuple[Optional[str], int]:
+    path = _state_path()
+    if path is None or not path.exists():
+        return None, 0
+    try:
+        data = json.loads(path.read_text())
+        return str(data["day"]), int(data["count"])
+    except (OSError, ValueError, KeyError, TypeError):
+        # A corrupt file must not take the demo down; start the day over.
+        logger.warning("demo limit state at %s is unreadable; ignoring it", path)
+        return None, 0
+
+
+def _save(day: str, count: int) -> None:
+    path = _state_path()
+    if path is None:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps({"day": day, "count": count}))
+        os.replace(tmp, path)
+    except OSError:
+        logger.exception("could not persist demo limit state to %s", path)
+
+
+def _seconds_until_midnight(now: datetime) -> int:
+    tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return max(1, int((tomorrow - now).total_seconds()))
+
+
+def demo_rate_limit() -> None:
+    """Refuse a run once today's shared allowance is spent."""
+    global _day, _count, _loaded
+
+    limit = settings.DEMO_MAX_RUNS_PER_DAY
     if not settings.DEMO_MODE or limit <= 0:
         return
 
-    key = _client_key(request)
-    now = time.monotonic()
-    cutoff = now - WINDOW_SECONDS
+    now = _now()
+    today = now.date().isoformat()
 
     with _lock:
-        seen = _hits[key]
-        while seen and seen[0] < cutoff:
-            seen.popleft()
+        if not _loaded:
+            _day, _count = _load()
+            _loaded = True
 
-        if len(seen) >= limit:
-            retry_after = int(seen[0] - cutoff) + 1
+        if _day != today:
+            _day, _count = today, 0
+
+        if _count >= limit:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=(
-                    "This demo allows "
-                    f"{limit} listings an hour from one address. "
-                    "Please try again shortly."
+                    f"This demo allows {limit} live runs a day in total. "
+                    "Today's are used up; it resets at midnight IST."
                 ),
-                headers={"Retry-After": str(retry_after)},
+                headers={"Retry-After": str(_seconds_until_midnight(now))},
             )
 
-        seen.append(now)
+        _count += 1
+        _save(_day, _count)
 
-        # Addresses that stopped calling should not accumulate forever in a
-        # process that stays up for a month.
-        if len(_hits) > 4096:
-            for stale in [k for k, v in _hits.items() if not v or v[-1] < cutoff]:
-                del _hits[stale]
+
+def reset_demo_limit() -> None:
+    """Forget today's count. For tests."""
+    global _day, _count, _loaded
+    with _lock:
+        _day, _count, _loaded = None, 0, True
