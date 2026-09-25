@@ -18,19 +18,22 @@
 # Overridable from the environment:
 #   AZURE_SUBSCRIPTION  default f3849fe0-171c-4378-81ce-3c1769804ed0
 #   ACR                 registry name, globally unique; default kirtikaracr
-#   GH_REPO             default krs-kaustubh/kirtikar.me
+#   GH_REPO             default gxlactuss/kirtikar.me
+#   AZURE_LOCATION      default uaenorth; must be allowed by the subscription's
+#                       policy AND offer Container Apps (see DEPLOY.md)
 #   BUDGET_EMAIL        who the budget alert mails; prompted for if unset
 #   BUDGET_AMOUNT       default 5, in the subscription's billing currency
 set -euo pipefail
 
 SUB="${AZURE_SUBSCRIPTION:-f3849fe0-171c-4378-81ce-3c1769804ed0}"
 RG=kirtikar-rg
-LOC=centralindia
+LOC="${AZURE_LOCATION:-uaenorth}"
 ENV_NAME=kirtikar-env
 APP=kirtikar-api
 ACR="${ACR:-kirtikaracr}"
-REPO="${GH_REPO:-krs-kaustubh/kirtikar.me}"
+REPO="${GH_REPO:-gxlactuss/kirtikar.me}"
 DEPLOYER=kirtikar-deployer
+PLACEHOLDER=mcr.microsoft.com/k8se/quickstart:latest
 CORS='https://kirtikar.me,https://www.kirtikar.me,http://localhost:5173'
 
 step() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
@@ -104,14 +107,16 @@ else
   ACR_USER=$(az acr credential show -n "$ACR" --query username -o tsv)
   ACR_PASS=$(az acr credential show -n "$ACR" --query 'passwords[0].value' -o tsv)
 
-  echo "   building the first image in ACR (about ten minutes)"
-  az acr build --registry "$ACR" --image "$APP:bootstrap" --file Dockerfile backend
-
+  # The app is created around a public placeholder image. The real one is
+  # built by the Deploy API workflow on GitHub's runners: Azure for Students
+  # refuses ACR Tasks (TasksOperationsNotAllowed), so `az acr build` is out,
+  # and building linux/amd64 on an Apple Silicon laptop is slow at best.
+  # The registry credentials are set now so that first deploy can pull.
   az containerapp create \
     --name "$APP" \
     --resource-group "$RG" \
     --environment "$ENV_NAME" \
-    --image "$ACR.azurecr.io/$APP:bootstrap" \
+    --image "$PLACEHOLDER" \
     --registry-server "$ACR.azurecr.io" \
     --registry-username "$ACR_USER" \
     --registry-password "$ACR_PASS" \
@@ -248,14 +253,20 @@ fi
 # ---------------------------------------------------------------- check
 
 step "Health"
-echo "   $API_BASE/health (a cold replica takes up to a minute)"
-for attempt in $(seq 1 12); do
-  if body=$(curl -fsS --max-time 20 "$API_BASE/health" 2>/dev/null); then
-    echo "   $body"
-    break
-  fi
-  sleep 10
-done
+image=$(az containerapp show -n "$APP" -g "$RG" --query 'properties.template.containers[0].image' -o tsv)
+if [ "$image" = "$PLACEHOLDER" ]; then
+  echo "   still on the placeholder image; the real one arrives with the first"
+  echo "   Deploy API run, which pushing main starts (backend/ has changed)."
+else
+  echo "   $API_BASE/health (a cold replica takes up to a minute)"
+  for attempt in $(seq 1 12); do
+    if body=$(curl -fsS --max-time 20 "$API_BASE/health" 2>/dev/null); then
+      echo "   $body"
+      break
+    fi
+    sleep 10
+  done
+fi
 
 cat <<EOF
 
@@ -263,8 +274,9 @@ Done. Before pushing main, make sure VITE_API_BASE is set on the repository
 (step 7 above): the site build bakes it in, and without it every visitor gets
 the recorded run. Then:
 
-  git push origin main
-  gh workflow run keepalive.yml --repo $REPO     # the daily check, run once now
+  git push origin main       # also runs Deploy API: builds the image, rolls it out
+  gh run watch --repo $REPO  # pick the Deploy API run
 
-and open https://kirtikar.me cold: the chip should read "Server live".
+and when it has finished, open https://kirtikar.me cold: the chip should read
+"Server live".
 EOF

@@ -1,7 +1,8 @@
 # Builds backend/ and deploys it to Azure Container Apps, which serves the demo API.
 #
-# ACR Tasks builds the image from backend/Dockerfile server-side (`az acr
-# build`), so nothing here needs Docker. The same Dockerfile that ran on a
+# The image is built from backend/Dockerfile on the runner and pushed to ACR.
+# Not `az acr build`: Azure for Students refuses ACR Tasks outright
+# (TasksOperationsNotAllowed). The same Dockerfile that ran on a
 # Hugging Face Space runs unchanged: it already listens on 7860 and runs as
 # uid 1000, and the container app's ingress is pointed at 7860 when it is
 # first created.
@@ -98,19 +99,19 @@ jobs:
             exit 1
           fi
 
-      # Server-side build. The context is backend/, so the image is built from
-      # exactly the tree this commit has, and it is tagged with the commit so
-      # a revision in the portal can be traced back to a line of code.
-      - name: Build the image in ACR
+      # The context is backend/, so the image is built from exactly the tree
+      # this commit has, and it is tagged with the commit so a revision in the
+      # portal can be traced back to a line of code. `az acr login` signs
+      # Docker in with the OIDC session, which is what the AcrPush role is for.
+      - name: Build and push the image
         env:
           REGISTRY: ${{ vars.AZURE_REGISTRY }}
         run: |
-          az acr build \
-            --registry "$REGISTRY" \
-            --image "$IMAGE_NAME:$GITHUB_SHA" \
-            --image "$IMAGE_NAME:latest" \
-            --file Dockerfile \
-            backend
+          az acr login --name "$REGISTRY"
+          image="$REGISTRY.azurecr.io/$IMAGE_NAME"
+          docker build --file backend/Dockerfile \
+            --tag "$image:$GITHUB_SHA" --tag "$image:latest" backend
+          docker push --all-tags "$image"
 
       # Every flag below is load-bearing; DEPLOY.md says which breaks what.
       - name: Deploy to Container Apps

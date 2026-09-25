@@ -18,12 +18,16 @@ Everything below lives in one Azure subscription, in one region:
 | | |
 | --- | --- |
 | Subscription | `f3849fe0-171c-4378-81ce-3c1769804ed0` |
-| Region | `centralindia` |
+| Region | `uaenorth` |
 | Resource group | `kirtikar-rg` |
 
-Central India is not decoration. The demo's users and its judges are in India,
-and so is Sarvam's speech API — the pipeline makes several round trips per run,
-and putting the container anywhere else adds that latency to all of them.
+The region is chosen for distance to India. The demo's users and its judges are
+in India, and so is Sarvam's speech API — the pipeline makes several round trips
+per run, and every hop adds that latency to all of them. Central India was the
+first choice, but the subscription is Azure for Students, whose policy allows
+only `eastasia`, `uaenorth`, `malaysiawest`, `indiasouthcentral` and
+`koreacentral`, and India South Central does not offer Container Apps. UAE North
+is the nearest of the rest; `AZURE_LOCATION` overrides it in the setup script.
 
 > **Why not a Hugging Face Space?** That was the original target, and
 > `backend/Dockerfile` still carries its fingerprints (port 7860, uid 1000).
@@ -96,7 +100,7 @@ it becomes the `AZURE_REGISTRY` repository variable in step 6.
 
 ```sh
 RG=kirtikar-rg
-LOC=centralindia
+LOC=uaenorth
 ACR=kirtikaracr           # must be globally unique, lowercase, no dashes
 
 az group create --name "$RG" --location "$LOC"
@@ -143,19 +147,18 @@ This is the only step that carries the API keys, and it is deliberately not in
 the workflow: an app cannot be created without them, and a workflow that had
 them would have them in this repository's history.
 
-Build the first image by hand, then create the app around it. Take
-`SARVAM_API_KEY` and `GEMINI_API_KEY` from the source repository's
-`backend/.env`:
+Create the app around a public placeholder image; the real one comes from the
+first **Deploy API** run (step 8), which builds on GitHub's runners. Azure for
+Students refuses ACR Tasks (`TasksOperationsNotAllowed`), so there is no
+`az acr build` here or in the workflow. Take `SARVAM_API_KEY` and
+`GEMINI_API_KEY` from the source repository's `backend/.env`:
 
 ```sh
-az acr build --registry "$ACR" --image kirtikar-api:bootstrap \
-  --file Dockerfile backend
-
 az containerapp create \
   --name kirtikar-api \
   --resource-group "$RG" \
   --environment kirtikar-env \
-  --image "$ACR.azurecr.io/kirtikar-api:bootstrap" \
+  --image mcr.microsoft.com/k8se/quickstart:latest \
   --registry-server "$ACR.azurecr.io" \
   --registry-username "$ACR_USER" \
   --registry-password "$ACR_PASS" \
@@ -170,8 +173,8 @@ az containerapp create \
     'GEMINI_API_KEY=secretref:gemini-api-key'
 ```
 
-The first build takes about ten minutes — most of it is installing onnxruntime
-and baking in the 179MB IS-Net model.
+The first real build, in the workflow, takes about ten minutes — most of it is
+installing onnxruntime and baking in the 179MB IS-Net model.
 
 Rotating a key afterwards never touches this repository:
 
@@ -188,7 +191,7 @@ Print the URL — this is what `VITE_API_BASE` becomes:
 ```sh
 az containerapp show -n kirtikar-api -g "$RG" \
   --query 'properties.configuration.ingress.fqdn' -o tsv
-# kirtikar-api.<something>.centralindia.azurecontainerapps.io
+# kirtikar-api.<something>.uaenorth.azurecontainerapps.io
 ```
 
 ### 6. Let GitHub Actions deploy, without a stored credential
@@ -201,7 +204,7 @@ deployer key always has and never announces.
 
 ```sh
 SUB=f3849fe0-171c-4378-81ce-3c1769804ed0
-REPO=krs-kaustubh/kirtikar.me      # owner/repo of THIS repository
+REPO=gxlactuss/kirtikar.me      # owner/repo of THIS repository
 
 APP_ID=$(az ad app create --display-name kirtikar-deployer --query appId -o tsv)
 az ad sp create --id "$APP_ID"
@@ -265,7 +268,7 @@ push.
 ### 8. Check it
 
 ```sh
-curl https://kirtikar-api.<something>.centralindia.azurecontainerapps.io/health
+curl https://kirtikar-api.<something>.uaenorth.azurecontainerapps.io/health
 # {"status":"ok","service":"Listing Factory API","version":"0.1.0"}
 ```
 
