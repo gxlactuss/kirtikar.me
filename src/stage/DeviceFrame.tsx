@@ -6,6 +6,8 @@ import css from './stage.module.css';
 interface Props {
   device: DevicePreset;
   zoom: number;
+  /** The screen is itself a phone: no frame, the app fills it. */
+  native?: boolean;
   children: ReactNode;
 }
 
@@ -22,11 +24,16 @@ interface Props {
  *     reports its true width to @container queries and to devtools.
  *
  * Scaling in place of resizing would be the easy version and would lie.
+ *
+ * `native` drops the frame on a real phone. It only restyles: the element
+ * tree stays the same, so crossing the breakpoint never remounts the app
+ * and loses a run in progress.
  */
-export function DeviceFrame({ device, zoom, children }: Props) {
+export function DeviceFrame({ device, zoom, native = false, children }: Props) {
   return (
     <div
       className={css.deviceSlot}
+      data-native={native ? '1' : '0'}
       style={
         {
           '--vw': `${device.width}px`,
@@ -40,8 +47,9 @@ export function DeviceFrame({ device, zoom, children }: Props) {
         <div className={css.bezel} data-bezel>
           <div
             className={css.viewport}
-            data-device={device.id}
+            data-device={native ? 'native' : device.id}
             data-width={device.width}
+            data-native={native ? '1' : '0'}
           >
             {children}
           </div>

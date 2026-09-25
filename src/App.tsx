@@ -1,3 +1,4 @@
+import { Disclaimer } from './stage/Disclaimer';
 import { Stage } from './stage/Stage';
 import { DemoApp } from './app/DemoApp';
 import { Intro } from './intro/Intro';
@@ -11,7 +12,7 @@ export function App() {
     <>
       <ShellBar />
       <Intro>
-        <Stage>
+        <Stage aside={<Disclaimer />}>
           <DemoApp />
         </Stage>
       </Intro>

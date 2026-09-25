@@ -77,5 +77,37 @@ export const BEZEL = 12;
  */
 export function fitZoom(availableHeight: number): number {
   const raw = (availableHeight - 72) / (TALLEST + BEZEL * 2);
-  return Math.min(1.3, Math.max(0.55, Math.round(raw * 20) / 20));
+  return clampZoom(Math.round(raw * 20) / 20);
 }
+
+/**
+ * On a tablet the size picker is hidden, so the frame never changes preset
+ * and there is nothing to keep steady: fit the one it shows, by width as well
+ * as height, rather than shrinking it to leave room for the tallest.
+ */
+export function fitZoomTo(device: DevicePreset, width: number, height: number): number {
+  const raw = Math.min(
+    (height - 120) / (device.height + BEZEL * 2),
+    (width - 32) / (device.width + BEZEL * 2),
+  );
+  // Floored, not rounded: rounding up would push the frame off the screen.
+  return clampZoom(Math.floor(raw * 20) / 20);
+}
+
+function clampZoom(zoom: number): number {
+  return Math.min(1.3, Math.max(0.55, zoom));
+}
+
+/**
+ * Below this the screen is itself a phone. A phone drawn inside a phone
+ * shrinks every tap target to half size, so the app takes the whole screen
+ * instead and the frame goes away. Mirrored in stage.module.css and
+ * intro.module.css.
+ */
+export const NATIVE_QUERY = '(max-width: 600px)';
+
+/** A phone on its side: too short for a portrait app at any usable scale. */
+export const SIDEWAYS_QUERY = '(max-height: 500px) and (orientation: landscape) and (pointer: coarse)';
+
+/** Matches DeviceFrame's stacked layout in stage.module.css. */
+export const STACKED_QUERY = '(max-width: 1100px)';

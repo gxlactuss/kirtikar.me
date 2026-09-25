@@ -62,6 +62,9 @@ export function HoldToSpeakButton({
         onPointerDown={down}
         onPointerUp={up}
         onPointerCancel={up}
+        // Android answers a long press with a context menu, which cancels
+        // the pointer and would cut the recording off mid-sentence.
+        onContextMenu={(e) => e.preventDefault()}
         // Keyboard equivalent: space/enter toggles rather than holds.
         onKeyDown={(e) => {
           if ((e.key === ' ' || e.key === 'Enter') && !recording) {

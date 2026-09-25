@@ -45,7 +45,7 @@ export function Scaffold({
         </span>
       </div>
 
-      <div className={css.appBar}>
+      <div className={`${css.appBar} ${leading === 'none' ? css.appBarEmpty : ''}`}>
         {leading === 'none' ? (
           <span className={css.appBarSpacer} />
         ) : (

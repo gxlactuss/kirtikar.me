@@ -269,6 +269,18 @@
   color: var(--stage-text);
 }
 
+/* What the demo is not. The desktop stage says it again beside the phone;
+ * on a tablet or phone this is the only place it appears, so it sits under
+ * the title, where a short screen still shows it. */
+.guideNote {
+  margin: calc(-1 * clamp(0.5rem, 1.5vh, 1rem)) 0 clamp(1rem, 2.5vh, 1.75rem);
+  max-width: 44rem;
+  font-size: clamp(0.72rem, 1.5vh, 0.82rem);
+  line-height: 1.45;
+  color: var(--stage-dim);
+  text-align: center;
+}
+
 /* --- act three: the stage arrives --------------------------------------- */
 
 .stageWrap {
@@ -500,6 +512,34 @@
   .handoff {
     bottom: 3.75rem;
     font-size: 0.8rem;
+  }
+}
+
+/* --- a real phone (NATIVE_QUERY in src/stage/devices.ts) ----------------
+ * The app fills the screen there, and its own buttons live along the bottom
+ * edge. Replay moves up into the strip the stage leaves for the shell bar,
+ * where skip was during the intro. */
+
+@media (max-width: 600px) {
+  /* Full size, skip ran into the theme toggle on a 320px screen. */
+  .skip {
+    top: clamp(0.75rem, 2.5vh, 1.25rem);
+    right: 0.75rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+  }
+
+  .replay {
+    top: clamp(0.75rem, 2.5vh, 1.25rem);
+    bottom: auto;
+    right: 0.75rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.66rem;
+  }
+
+  .handoff {
+    bottom: 1rem;
   }
 }
 

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { DEVICES, DEFAULT_DEVICE, fitZoom } from './devices';
+import {
+  DEVICES,
+  DEFAULT_DEVICE,
+  NATIVE_QUERY,
+  SIDEWAYS_QUERY,
+  STACKED_QUERY,
+  fitZoom,
+  fitZoomTo,
+} from './devices';
 import { DeviceFrame } from './DeviceFrame';
 import { DeviceSizePicker } from './DeviceSizePicker';
 import css from './stage.module.css';
@@ -17,18 +25,33 @@ interface Props {
  */
 export function Stage({ children, aside }: Props) {
   const [index, setIndex] = useState(DEFAULT_DEVICE);
-  const [available, setAvailable] = useState(() => window.innerHeight);
+  const [available, setAvailable] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  const native = useMedia(NATIVE_QUERY);
+  const sideways = useMedia(SIDEWAYS_QUERY);
+  const stacked = useMedia(STACKED_QUERY);
 
   // null means "follow the window"; a number means the user took over.
   const [manualZoom, setManualZoom] = useState<number | null>(null);
 
-  const autoZoom = useMemo(() => fitZoom(available), [available]);
+  const device = DEVICES[index] ?? DEVICES[DEFAULT_DEVICE]!;
+
+  const autoZoom = useMemo(
+    () =>
+      stacked
+        ? fitZoomTo(device, available.width, available.height)
+        : fitZoom(available.height),
+    [stacked, device, available],
+  );
   const zoom = manualZoom ?? autoZoom;
 
   const frameRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onResize = () => setAvailable(window.innerHeight);
+    const onResize = () =>
+      setAvailable({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -58,10 +81,8 @@ export function Stage({ children, aside }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const device = DEVICES[index] ?? DEVICES[DEFAULT_DEVICE]!;
-
   return (
-    <div className={`${css.stage} stageScope`}>
+    <div className={`${css.stage} stageScope`} data-native={native ? '1' : '0'}>
       <div className={css.left}>
         <DeviceSizePicker
           index={index}
@@ -74,10 +95,33 @@ export function Stage({ children, aside }: Props) {
       </div>
 
       <div className={css.deviceCell} ref={frameRef}>
-        <DeviceFrame device={device} zoom={zoom}>
+        <DeviceFrame device={device} zoom={zoom} native={native}>
           {children}
         </DeviceFrame>
       </div>
+
+      {/* Laid over the app, never swapped for it, so turning the phone back
+          upright finds the run exactly where it was. */}
+      {sideways ? (
+        <div className={css.sideways} role="alert">
+          <span className={css.sidewaysIcon} aria-hidden="true">
+            ⟳
+          </span>
+          Turn your phone upright to use the demo.
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function useMedia(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const list = window.matchMedia(query);
+    const onChange = () => setMatches(list.matches);
+    onChange();
+    list.addEventListener('change', onChange);
+    return () => list.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
 }

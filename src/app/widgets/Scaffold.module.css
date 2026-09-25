@@ -143,3 +143,15 @@
   background: var(--ink);
   opacity: 0.25;
 }
+
+/* --- on a real phone (data-native, set by the stage's DeviceFrame) ---
+ * The device already draws a clock, a battery and a home indicator, and the
+ * shell bar above the app already says "Demo data" (with the reason), so the
+ * whole stand-in status row goes. So does an app bar with no button in it:
+ * 56px a small screen can't spare. */
+
+:global([data-native='1']) .statusBar,
+:global([data-native='1']) .appBarEmpty,
+:global([data-native='1']) .homeIndicator {
+  display: none;
+}

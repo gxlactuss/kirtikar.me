@@ -461,6 +461,10 @@ export function Intro({ children }: { children: ReactNode }) {
           <section className={`${css.act} ${css.actGuide}`}>
             <p className={css.eyebrow}>How to use it</p>
             <h2 className={css.guideTitle}>Create your own mock listing.</h2>
+            <p className={css.guideNote}>
+              This demo shows the raw processing only. The Kirtikar app itself
+              considers more parameters and asks the seller for more feedback.
+            </p>
             <ol className={css.cards}>
               {GUIDE.map((step, i) => (
                 <li className={css.card} data-card key={step.title}>
