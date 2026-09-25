@@ -130,7 +130,7 @@ else
     --registry-password "$ACR_PASS" \
     --target-port 7860 \
     --ingress external \
-    --cpu 1 --memory 2Gi \
+    --cpu 2 --memory 4Gi \
     --min-replicas 0 --max-replicas 1 \
     --secrets "sarvam-api-key=$SARVAM_API_KEY" "gemini-api-key=$GEMINI_API_KEY" \
     --env-vars \

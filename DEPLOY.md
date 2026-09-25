@@ -171,7 +171,7 @@ az containerapp create \
   --registry-password "$ACR_PASS" \
   --target-port 7860 \
   --ingress external \
-  --cpu 1 --memory 2Gi \
+  --cpu 2 --memory 4Gi \
   --min-replicas 0 --max-replicas 1 \
   --secrets "sarvam-api-key=$SARVAM_API_KEY" "gemini-api-key=$GEMINI_API_KEY" \
   --env-vars \
@@ -310,9 +310,13 @@ specific:
   reason the Dockerfile runs uvicorn with `--workers 1`.
 - **`--target-port 7860`.** Ingress has no default that would work here; the
   Dockerfile listens on 7860, inherited from the Space it was written for.
-- **`--cpu 1 --memory 2Gi`.** IS-Net wants about 1GB. Container Apps only
-  accepts certain CPU/memory pairs, and 1 vCPU must be paired with 2Gi — this
-  is not a number to round down.
+- **`--cpu 2 --memory 4Gi`.** Background removal (IS-Net through ONNX
+  Runtime) peaks well past 2GB, not the 1GB it was once sized for: measured
+  2.1GB on a first photo and 2.7GB by the second in the same process. At
+  `--memory 2Gi` the kernel killed the container mid-pipeline on 2026-09-25,
+  which takes the SQLite database with it, so the site's status poll got a
+  404 and fell back to a recording. Container Apps only accepts certain
+  CPU/memory pairs, and 4Gi comes with 2 vCPU. Do not round it back down.
 - **`--min-replicas 0`.** What makes the deployment free, and what makes the
   first visit slow. See below.
 
@@ -331,10 +335,11 @@ It doesn't, quite, and that is a deliberate trade.
 With `--min-replicas 0` the replica is scaled away a few minutes after the last
 request, so most judges will arrive at a cold container and wait 40-60 seconds
 for the image to pull and the app to import. Nothing pins a replica up, because
-doing so — `--min-replicas 1` — means a 1 vCPU / 2GiB replica billed around the
-clock: roughly 2.6M vCPU-seconds a month against a free grant of 180K
-vCPU-seconds and 360K GiB-seconds, or about $30-40 a month against a deployment
-that is otherwise free.
+doing so — `--min-replicas 1` — means a 2 vCPU / 4GiB replica billed around the
+clock: roughly 5.2M vCPU-seconds a month against a free grant of 180K
+vCPU-seconds and 360K GiB-seconds, or about $60-80 a month against a deployment
+that is otherwise free. Scaled to zero, the grant covers about 25 hours of
+active replica time a month.
 
 Three things carry that weight instead:
 
@@ -431,13 +436,12 @@ az containerapp logs show -n kirtikar-api -g kirtikar-rg --type system --tail 50
   running with the wrong permissions. That is the intended behaviour; if you
   need a staging branch to deploy, add a second federated credential rather
   than loosening the subject.
-- **Six of the ten bundled craft photos fail the image subject gate** —
-  pottery, handloom, embroidery, Madhubani, leather and bamboo are
-  photographed in context rather than against a plain background, so a run on
-  them ends in `needs_attention` asking for a retake. That is the pipeline
-  working correctly. Jewellery, metalwork, wood carving and the sindoor boxes
-  pass, so `src/app/crafts.ts` puts them first in the rail: a judge's first
-  try should end in a finished listing. Re-measure before reordering.
+- **Catalog photos taken in context fail the image subject gate.** A product
+  photographed in a potter's yard or on a loom, rather than against a plain
+  background, ends with a retake note on the finished product. That is the
+  pipeline working correctly, but it is not what a judge should meet first,
+  so put clean product shots at the front of `src/assets/products/` (file
+  names set the order; see the README there).
 - **A voice note is transcribed live or not at all.** Sarvam's `saaras:v3`
   is served only from `/speech-to-text` with `mode=translate`; the service
   used to call the legacy `/speech-to-text-translate`, which rejects v3, and
