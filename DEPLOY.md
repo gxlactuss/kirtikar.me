@@ -127,8 +127,15 @@ free, and the cheapest way to have a registry in the same region as the app.
 az containerapp env create \
   --name kirtikar-env \
   --resource-group "$RG" \
-  --location "$LOC"
+  --location "$LOC" \
+  --environment-mode ConsumptionOnly
 ```
+
+`--environment-mode` is not optional. Left out, the CLI makes an **Express**
+environment, which refuses every way of pulling from a private registry (the
+admin password and a managed identity alike), has no revision suffixes, and
+fails the first deploy with `Authentication failed when pulling container
+image`.
 
 The environment is the network and logging boundary the app runs in. Creating
 it also creates a Log Analytics workspace, which is where `az containerapp
@@ -220,6 +227,16 @@ az ad app federated-credential create --id "$APP_ID" --parameters "{
 The subject is matched exactly, so this credential authorises pushes to `main`
 and nothing else. A `workflow_dispatch` run from `main` matches it too; a run
 from any other branch does not, and fails at the login step.
+
+Check the subject before creating it. Newer and transferred repositories —
+this one included — sign with immutable ids, so the real subject is
+`repo:gxlactuss@228005047/kirtikar.me@1376221251:ref:refs/heads/main`, and a
+credential for the plain form fails with `AADSTS700213: No matching federated
+identity record`. GitHub reports the prefix:
+
+```sh
+gh api repos/$REPO/actions/oidc/customization/sub --jq .sub_claim_prefix
+```
 
 Grant it the two things a deploy needs — update the app, and push to the
 registry — scoped to the resource group rather than the subscription:

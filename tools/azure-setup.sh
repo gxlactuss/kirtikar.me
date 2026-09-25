@@ -91,7 +91,11 @@ step "3. Container Apps environment"
 if az containerapp env show -n "$ENV_NAME" -g "$RG" -o none 2>/dev/null; then
   skip "$ENV_NAME"
 else
-  az containerapp env create --name "$ENV_NAME" --resource-group "$RG" --location "$LOC" -o none
+  # ConsumptionOnly, never the CLI's default of Express: an Express
+  # environment cannot pull from a private registry at all (it rejects both
+  # the admin password and a managed identity) and has no revision suffixes.
+  az containerapp env create --name "$ENV_NAME" --resource-group "$RG" --location "$LOC" \
+    --environment-mode ConsumptionOnly -o none
 fi
 
 # ---------------------------------------------------------------- 4 + 5. the app
@@ -107,16 +111,20 @@ else
   ACR_USER=$(az acr credential show -n "$ACR" --query username -o tsv)
   ACR_PASS=$(az acr credential show -n "$ACR" --query 'passwords[0].value' -o tsv)
 
-  # The app is created around a public placeholder image. The real one is
-  # built by the Deploy API workflow on GitHub's runners: Azure for Students
-  # refuses ACR Tasks (TasksOperationsNotAllowed), so `az acr build` is out,
-  # and building linux/amd64 on an Apple Silicon laptop is slow at best.
-  # The registry credentials are set now so that first deploy can pull.
+  # The image is built by the Deploy API workflow on GitHub's runners: Azure
+  # for Students refuses ACR Tasks (TasksOperationsNotAllowed), so `az acr
+  # build` is out, and building linux/amd64 on an Apple Silicon laptop is slow
+  # at best. Until that workflow has pushed once, start from a placeholder.
+  if az acr repository show -n "$ACR" --image "$APP:latest" -o none 2>/dev/null; then
+    FIRST_IMAGE="$ACR.azurecr.io/$APP:latest"
+  else
+    FIRST_IMAGE=$PLACEHOLDER
+  fi
   az containerapp create \
     --name "$APP" \
     --resource-group "$RG" \
     --environment "$ENV_NAME" \
-    --image "$PLACEHOLDER" \
+    --image "$FIRST_IMAGE" \
     --registry-server "$ACR.azurecr.io" \
     --registry-username "$ACR_USER" \
     --registry-password "$ACR_PASS" \
@@ -130,8 +138,15 @@ else
       'SARVAM_API_KEY=secretref:sarvam-api-key' \
       'GEMINI_API_KEY=secretref:gemini-api-key' \
     -o none
+  # `create` drops the registry block when the image is not from it (the
+  # placeholder), and the first real deploy then fails to pull. Set it again.
+  az containerapp registry set -n "$APP" -g "$RG" --server "$ACR.azurecr.io" \
+    --username "$ACR_USER" --password "$ACR_PASS" -o none
   unset SARVAM_API_KEY GEMINI_API_KEY ACR_PASS
 fi
+
+mode=$(az containerapp env show -n "$ENV_NAME" -g "$RG" --query properties.environmentMode -o tsv)
+[ "$mode" != Express ] || die "$ENV_NAME is an Express environment, which cannot pull from $ACR. Delete it and $APP and rerun."
 
 FQDN=$(az containerapp show -n "$APP" -g "$RG" --query 'properties.configuration.ingress.fqdn' -o tsv)
 API_BASE="https://$FQDN"
@@ -153,7 +168,11 @@ else
   az ad sp create --id "$APP_ID" -o none
 fi
 
-SUBJECT="repo:$REPO:ref:refs/heads/main"
+# Newer and transferred repositories sign with immutable ids in the subject
+# (repo:owner@123/name@456:...), and the match is exact, so ask GitHub for the
+# prefix rather than assuming the plain repo:owner/name form.
+PREFIX=$(gh api "repos/$REPO/actions/oidc/customization/sub" --jq '.sub_claim_prefix // empty' 2>/dev/null || true)
+SUBJECT="${PREFIX:-repo:$REPO}:ref:refs/heads/main"
 if az ad app federated-credential list --id "$APP_ID" --query "[?subject=='$SUBJECT'] | [0].name" -o tsv | grep -q .; then
   skip "federated credential for $SUBJECT"
 else
