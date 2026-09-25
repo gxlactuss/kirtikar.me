@@ -86,26 +86,27 @@ const GUIDE = [
     title: 'Pick one photo',
     body: (
       <>
-        Pick one of the <em>ten craft photos</em>, or upload a photo of your own.
+        Upload a photo of your own, or pick one of <em>our ready-made products</em>.
         One is all it needs.
       </>
     ),
   },
   {
-    title: 'Say one sentence',
+    title: 'Say what it is',
     body: (
       <>
-        Hold the button and describe it: what it is, what it is made of, how long it
+        Hold the button and describe it: what it is, its colour, how big, how long it
         took. <em>Up to 30 seconds</em>, in any language you like.
       </>
     ),
   },
   {
-    title: 'Watch it write the listing',
+    title: 'Fill the gaps, see it finished',
     body: (
       <>
-        The background is cut out, your voice is transcribed and translated, and the
-        title, description, fact sheet and <em>price band</em> are written from both.
+        The photo is cleaned up and your voice is transcribed. Anything you left out,
+        like the size or the price, you <em>type in</em>, and the finished product
+        appears.
       </>
     ),
   },
@@ -133,6 +134,10 @@ export function Intro({ children }: { children: ReactNode }) {
   // again rather than trying to rewind the state it left behind.
   const [runId, setRunId] = useState(0);
 
+  // The marker's life after landing: 'live' until the visitor first touches
+  // anything, then it gets out of the way.
+  const [arrival, setArrival] = useState<'live' | 'done'>('live');
+
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landedRef = useRef(landed);
@@ -156,6 +161,7 @@ export function Intro({ children }: { children: ReactNode }) {
     const guide = q<HTMLElement>(`.${css.actGuide}`)!;
     const stageWrap = q<HTMLElement>(`.${css.stageWrap}`)!;
     const skip = q<HTMLElement>(`.${css.skip}`);
+    const gate = q<HTMLElement>(`.${css.handoff}`)!;
     const pieces = [...host.querySelectorAll<SVGPathElement>('[data-piece]')];
     const cards = [...host.querySelectorAll<HTMLElement>('[data-card]')];
 
@@ -260,6 +266,17 @@ export function Intro({ children }: { children: ReactNode }) {
       const sIn = easeOut(span(p, STAGE_IN));
       stageWrap.style.opacity = String(sIn);
       stageWrap.style.transform = `scale(${0.94 + 0.06 * sIn})`;
+
+      // The boundary between watching and doing. The phone is drawn well
+      // before it takes input, so until the very end of the track it stays
+      // greyed out (see .stageWrap) and this bar says how far is left.
+      // Once landed, CSS owns the marker and it says the demo is live.
+      if (landedRef.current) {
+        gate.style.opacity = '';
+      } else {
+        gate.style.opacity = String(span(p, [STAGE_IN[0], STAGE_IN[0] + 0.06]));
+        gate.style.setProperty('--fill', String(span(p, [STAGE_IN[0], 1])));
+      }
     }
 
     function frame(now: number) {
@@ -343,6 +360,23 @@ export function Intro({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('introRunning', !landed);
     if (landed) return;
     return () => document.documentElement.classList.remove('introRunning');
+  }, [landed]);
+
+  // "Your turn" stays until the first real interaction, not on a timer, so a
+  // judge who looked away while it landed still sees it. It does not block
+  // anything: pointer events pass straight through to the phone.
+  useEffect(() => {
+    if (!landed) {
+      setArrival('live');
+      return;
+    }
+    const done = () => setArrival('done');
+    window.addEventListener('pointerdown', done, { capture: true, once: true });
+    window.addEventListener('keydown', done, { capture: true, once: true });
+    return () => {
+      window.removeEventListener('pointerdown', done, { capture: true });
+      window.removeEventListener('keydown', done, { capture: true });
+    };
   }, [landed]);
 
   // Escape skips; it is the one key a visitor tries when a page takes over.
@@ -440,8 +474,38 @@ export function Intro({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <div className={css.stageWrap} data-landed={landed ? '1' : '0'}>
+      <div
+        className={css.stageWrap}
+        data-landed={landed ? '1' : '0'}
+        data-arrived={landed && arrival === 'live' ? '1' : '0'}
+      >
         {children}
+      </div>
+
+      <div
+        className={css.handoff}
+        data-state={landed ? arrival : 'gate'}
+        role="status"
+        aria-live="polite"
+      >
+        {landed ? (
+          <>
+            <span className={css.liveDot} aria-hidden="true" />
+            <span>
+              <strong>Your turn.</strong> The demo is live from here.
+            </span>
+          </>
+        ) : (
+          <>
+            <span className={css.arrow} aria-hidden="true">
+              ↓
+            </span>
+            <span>Keep scrolling to start the demo</span>
+            <span className={css.gateTrack} aria-hidden="true">
+              <span className={css.gateFill} />
+            </span>
+          </>
+        )}
       </div>
 
       {/* Distinct keys on purpose. Without them React reuses one <button>

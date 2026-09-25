@@ -286,6 +286,125 @@
   pointer-events: auto;
 }
 
+/* --- the boundary between watching and doing --------------------------
+ * The phone is fully drawn well before it takes input, and a visitor cannot
+ * see a pointer-events rule. So until landing it is visibly switched off:
+ * greyed and dimmed, with the handoff bar below saying how far is left. On
+ * landing it switches on, a ring goes round it once or twice, and the bar
+ * turns into "Your turn". The filter lives here rather than inline so the
+ * attribute flip is what animates it. */
+
+.stageWrap[data-landed='0'] {
+  filter: grayscale(0.85) opacity(0.55);
+}
+
+.stageWrap[data-landed='1'] {
+  filter: none;
+  transition: filter var(--slow) var(--standard);
+}
+
+.stageWrap[data-arrived='1'] [data-bezel] {
+  animation: arrive 1.7s var(--standard) 2;
+}
+
+@keyframes arrive {
+  0% {
+    outline: 3px solid color-mix(in srgb, var(--stage-accent) 75%, transparent);
+    outline-offset: 2px;
+  }
+  100% {
+    outline: 3px solid transparent;
+    outline-offset: 28px;
+  }
+}
+
+.handoff {
+  position: fixed;
+  z-index: 5;
+  left: 50%;
+  bottom: clamp(1rem, 3vh, 1.75rem);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid var(--stage-line);
+  background: var(--stage-panel);
+  color: var(--stage-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Never in the way: a click on it lands on the phone underneath. */
+  pointer-events: none;
+  opacity: 0;
+}
+
+.handoff strong {
+  font-weight: 700;
+}
+
+.arrow {
+  color: var(--stage-accent);
+  animation: bob 1.4s var(--in-out) infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.gateTrack {
+  width: 4.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--stage-line);
+  overflow: hidden;
+}
+
+.gateFill {
+  display: block;
+  height: 100%;
+  width: calc(var(--fill, 0) * 100%);
+  background: var(--stage-accent);
+}
+
+.handoff[data-state='live'] {
+  opacity: 1;
+  border-color: var(--stage-ok);
+  color: var(--stage-ok-text);
+  animation: popIn var(--medium) var(--overshoot);
+}
+
+.handoff[data-state='done'] {
+  opacity: 0;
+  transition: opacity var(--slow) var(--standard);
+}
+
+@keyframes popIn {
+  from {
+    transform: translateX(-50%) scale(0.9);
+  }
+}
+
+.liveDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--stage-ok);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--stage-ok) 60%, transparent);
+  animation: livePulse 1.6s ease-out infinite;
+}
+
+@keyframes livePulse {
+  to {
+    box-shadow: 0 0 0 0.5rem transparent;
+  }
+}
+
 /* Once landed the track gives the viewport back entirely — not merely
  * hidden, or its four screens of height would leave the finished demo with
  * a scrollbar and a way to scroll the intro back over itself. */
@@ -377,10 +496,19 @@
     max-width: none;
   }
 
+  /* Sits above the replay control, which shares the bottom edge. */
+  .handoff {
+    bottom: 3.75rem;
+    font-size: 0.8rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cueLine {
+  .cueLine,
+  .arrow,
+  .liveDot,
+  .handoff[data-state='live'],
+  .stageWrap[data-arrived='1'] [data-bezel] {
     animation: none;
   }
 }

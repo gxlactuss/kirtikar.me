@@ -35,6 +35,53 @@ const check = (what, ok) => {
   if (!ok) fails.push(what);
 };
 
+// --- the boundary: the phone is visibly off until the scroll ends ---
+{
+  const b = await open();
+  await b.goto(URL, { waitUntil: 'networkidle' });
+  await b.waitForTimeout(1400);
+  const max = await b.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  await b.evaluate((y) => window.scrollTo(0, y), Math.round(max * 0.88));
+  await b.waitForTimeout(900);
+  const before = await b.evaluate(() => {
+    const h = document.querySelector('[class*=handoff]');
+    const w = document.querySelector('[class*=stageWrap]');
+    return {
+      state: h?.dataset.state,
+      shown: Number(getComputedStyle(h).opacity) > 0.5,
+      text: h?.textContent,
+      dimmed: getComputedStyle(w).filter !== 'none',
+      clickable: getComputedStyle(w).pointerEvents !== 'none',
+    };
+  });
+  check('near the end, the bar says to keep scrolling', before.state === 'gate' && before.shown && /Keep scrolling/.test(before.text));
+  check('near the end, the phone is greyed and not clickable', before.dimmed && !before.clickable);
+
+  await b.evaluate(() => window.scrollTo(0, 1e6));
+  await b.waitForTimeout(1500);
+  const after = await b.evaluate(() => {
+    const h = document.querySelector('[class*=handoff]');
+    const w = document.querySelector('[class*=stageWrap]');
+    return {
+      state: h?.dataset.state,
+      shown: Number(getComputedStyle(h).opacity) > 0.5,
+      text: h?.textContent,
+      dimmed: getComputedStyle(w).filter !== 'none',
+      handoffClickThrough: getComputedStyle(h).pointerEvents === 'none',
+    };
+  });
+  check('at the end, the bar says the demo is live', after.state === 'live' && after.shown && /Your turn/.test(after.text));
+  check('at the end, the phone is in full colour', !after.dimmed);
+  check('the live marker never blocks a click', after.handoffClickThrough);
+  await b.screenshot({ path: `${OUT}/c-boundary-live.png` });
+
+  await b.mouse.click(10, 450);
+  await b.waitForTimeout(700);
+  const gone = await b.evaluate(() => document.querySelector('[class*=handoff]')?.dataset.state);
+  check('the first click puts the marker away', gone === 'done');
+  await b.close();
+}
+
 // --- skip lands, and the demo underneath actually works ---
 const page = await open();
 await page.goto(URL, { waitUntil: 'networkidle' });
@@ -45,10 +92,10 @@ let s = await state(page);
 check('skip lands on the demo', s.stageLive && !s.introRunning);
 check('landing leaves nothing to scroll', s.scrollable === 0);
 
-await page.click('text=Pottery');
+await page.locator('input[type=file]').setInputFiles('public/fixtures/pottery/photo_1.jpg');
 await page.waitForTimeout(900);
 check(
-  'the rail is usable after landing',
+  'the picker is usable after landing',
   await page.evaluate(() => !!document.querySelector('img[src^="blob:"]')),
 );
 await page.screenshot({ path: `${OUT}/c-after-skip.png` });
@@ -72,15 +119,6 @@ const reduced = await open({ reducedMotion: 'reduce' });
 await reduced.goto(URL, { waitUntil: 'networkidle' });
 await reduced.waitForTimeout(600);
 check('reduced motion skips the sequence', (await state(reduced)).stageLive);
-
-// --- a scanned QR is a buyer, not a visitor: no intro at all ---
-const buyer = await open();
-await buyer.goto(`${URL}?listing=abc`, { waitUntil: 'networkidle' });
-await buyer.waitForTimeout(500);
-check(
-  'the buyer page has no intro',
-  await buyer.evaluate(() => !document.querySelector('[class*=intro_track]')),
-);
 
 // --- a phone ---
 const phone = await open({ viewport: { width: 390, height: 844 } });

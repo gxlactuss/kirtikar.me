@@ -37,7 +37,7 @@ export function DeviceFrame({ device, zoom, children }: Props) {
       }
     >
       <div className={css.deviceScale}>
-        <div className={css.bezel}>
+        <div className={css.bezel} data-bezel>
           <div
             className={css.viewport}
             data-device={device.id}
