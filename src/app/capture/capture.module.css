@@ -3,9 +3,6 @@
 /* --- the chosen photo --- */
 
 .chosen {
-  /* overflow: hidden makes its min-height 0, and the scrolling body would
-   * otherwise squash it to a line. */
-  flex-shrink: 0;
   margin: 0;
   border-radius: var(--radius);
   overflow: hidden;

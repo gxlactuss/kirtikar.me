@@ -27,7 +27,6 @@
 /* --- what we have so far --- */
 
 .context {
-  flex-shrink: 0;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -138,9 +137,6 @@
 /* --- the finished product --- */
 
 .card {
-  /* overflow: hidden makes its min-height 0, and the scrolling body would
-   * otherwise squash it. */
-  flex-shrink: 0;
   border-radius: var(--radius);
   border: var(--border-width) solid var(--border);
   background: #fff;

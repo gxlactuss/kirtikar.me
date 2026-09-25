@@ -103,6 +103,15 @@
   gap: 16px;
 }
 
+/* The body scrolls, so nothing in it may shrink. A flex item's min-height
+ * is its content, so without this a fixed-height block squeezes down to
+ * whatever is inside it: the 84px waveform tracked the live voice level
+ * while recording, the content height changed every frame, and the
+ * scrollbar flipped on and off so the screen jolted up and down. */
+.body > * {
+  flex-shrink: 0;
+}
+
 /* --- bottom action stack --- */
 
 .actions {
