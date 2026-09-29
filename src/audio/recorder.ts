@@ -69,6 +69,8 @@ export class Recorder {
   private peaks: number[] = [];
   private level = 0;
   private startedAt = 0;
+  private starting = false;
+  private abandoned = false;
 
   constructor(private readonly events: RecorderEvents = {}) {}
 
@@ -76,8 +78,18 @@ export class Recorder {
     return this.recorder?.state === 'recording';
   }
 
+  /**
+   * Must be called synchronously from the press itself (pointerdown or
+   * keydown), because the meter's AudioContext is made before the first
+   * await; see meterContext below.
+   *
+   * Resolves with `recording` still false when cancel() arrived while the
+   * microphone was being opened; the stream is released by then.
+   */
   async start(): Promise<void> {
-    if (this.recording) return;
+    // A second start while the first is waiting on getUserMedia would open a
+    // second stream, and only one of the two would ever be stopped.
+    if (this.recording || this.starting) return;
     const blocked = micBlockedReason();
     if (blocked === 'insecure') {
       throw new RecorderError(
@@ -89,11 +101,18 @@ export class Recorder {
       throw new RecorderError('This browser cannot record audio.', 'unsupported');
     }
 
+    this.starting = true;
+    this.abandoned = false;
+    this.ctx = meterContext();
+
+    let stream: MediaStream;
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
+      stream = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
       });
     } catch (e) {
+      this.starting = false;
+      this.teardown();
       const denied = e instanceof DOMException && e.name === 'NotAllowedError';
       throw new RecorderError(
         denied
@@ -102,27 +121,51 @@ export class Recorder {
         denied ? 'permission' : 'failed',
       );
     }
+    this.starting = false;
+
+    // Let go before the microphone came up: on a phone the first press opens
+    // the permission prompt, which cancels the touch, and a quick tap is over
+    // before getUserMedia answers. Recording now would leave the microphone
+    // running with no finger on the button and nothing left to stop it.
+    if (this.abandoned) {
+      stream.getTracks().forEach((t) => t.stop());
+      return;
+    }
+    this.stream = stream;
 
     this.chunks = [];
     this.peaks = [];
     this.level = 0;
 
-    this.ctx = new AudioContext();
-    // Chrome hands back a suspended context when one was created before any
-    // gesture reached the page. A suspended context clocks no frames, so the
-    // analyser reads pure silence and the waveform sits flat through the
-    // whole recording even though the audio itself records fine.
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    // The meter is decoration; the recording below reads the stream directly
+    // and must never wait on it or fail because of it.
+    if (this.ctx) {
+      try {
+        // A second nudge now that capture is live: Safari is more lenient
+        // with audio on a page that is capturing, so this can wake a context
+        // the press could not. If it cannot, the waveform stays flat and the
+        // recording is no worse for it.
+        wake(this.ctx);
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 1024;
+        this.ctx.createMediaStreamSource(stream).connect(this.analyser);
+      } catch {
+        this.analyser = null;
+      }
+    }
 
-    this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 1024;
-    this.ctx.createMediaStreamSource(this.stream).connect(this.analyser);
-
-    this.recorder = new MediaRecorder(this.stream);
-    this.recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) this.chunks.push(e.data);
-    };
-    this.recorder.start();
+    try {
+      this.recorder = new MediaRecorder(stream);
+      this.recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.chunks.push(e.data);
+      };
+      this.recorder.start();
+    } catch {
+      // Without this the stream would stay open behind an error message,
+      // with the browser's recording indicator still lit.
+      this.teardown();
+      throw new RecorderError('The microphone did not start.', 'failed');
+    }
     this.startedAt = performance.now();
 
     this.timer = window.setInterval(() => this.tick(), POLL_MS);
@@ -165,6 +208,9 @@ export class Recorder {
 
   /** Abandons the recording without producing anything. */
   cancel(): void {
+    // If start() is still waiting on getUserMedia, this is what tells it to
+    // hand the stream straight back instead of recording.
+    this.abandoned = true;
     try {
       if (this.recorder?.state === 'recording') this.recorder.stop();
     } catch {
@@ -203,8 +249,45 @@ export class Recorder {
     }
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
-    void this.ctx?.close();
+    void this.ctx?.close().catch(() => {});
     this.ctx = null;
     this.analyser = null;
   }
+}
+
+/**
+ * The level meter's AudioContext, made inside the press.
+ *
+ * iOS Safari only lets a context start while a user gesture is being
+ * handled. One made after `await getUserMedia` is outside it, stays
+ * suspended, and `await ctx.resume()` on it can simply never settle, which
+ * used to hang start() so the button never entered recording at all. Made
+ * here, before the first await, it is still inside the pointerdown.
+ *
+ * Chrome likewise hands back a suspended context when no gesture has reached
+ * the page, and a suspended context clocks no frames, so the analyser would
+ * read pure silence and the waveform sit flat through the whole recording.
+ *
+ * Returns null rather than throwing: older iOS caps how many contexts a page
+ * may hold, and a meter that cannot be built is no reason not to record.
+ */
+function meterContext(): AudioContext | null {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    wake(ctx);
+    return ctx;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resume without waiting: a resume() that never settles must not matter.
+ * Called whatever the state, because iOS also has a non-standard
+ * "interrupted" state (the audio session switching to capture puts a running
+ * context there), and resume() on a running context is a no-op anyway.
+ */
+function wake(ctx: AudioContext): void {
+  ctx.resume().catch(() => {});
 }
