@@ -19,3 +19,16 @@
 .active {
   background: var(--terracotta);
 }
+
+/* A short screen gets a 56px meter. The bar heights are written inline in
+ * px by Waveform.tsx, up to 76, so they are scaled rather than capped: the
+ * bell shape and the swing both survive, and the tallest bar still fits. */
+@container phone (max-height: 640px) {
+  .root {
+    height: 56px;
+  }
+
+  .bar {
+    scale: 1 0.7;
+  }
+}

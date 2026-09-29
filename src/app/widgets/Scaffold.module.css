@@ -101,6 +101,14 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* The last few pixels fade out, so a line cut off by the action stack
+   * reads as "more below" rather than as something hidden behind a button.
+   * The fade is shorter than the bottom padding, so once scrolled to the
+   * end it only ever falls on empty space. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+  /* A field focused near the bottom stops clear of the fade. */
+  scroll-padding-bottom: var(--gutter);
 }
 
 /* The body scrolls, so nothing in it may shrink. A flex item's min-height
@@ -125,6 +133,68 @@
   max-height: 50cqh;
   overflow-y: auto;
   background: var(--cream);
+}
+
+/* --- short screens ---
+ * On a 568px phone the app bar, the step bar and three stacked buttons left
+ * the body under 180px, so the voice screen's own counter sat cut in half
+ * under the buttons. Below 640px the chrome gives back what it can: the
+ * step bar moves up beside the back button instead of taking a row of its
+ * own, an app bar with nothing in it goes, and the action stack tightens
+ * (the buttons themselves shrink in BigActionButton).
+ *
+ * The step bar is placed as "whatever follows the app bar, if it is not the
+ * body", because it is StepProgress's own element and has no class here. */
+
+@container phone (max-height: 640px) {
+  .root {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  }
+
+  .root > * {
+    grid-column: 1 / -1;
+  }
+
+  .statusBar {
+    grid-row: 1;
+  }
+
+  .appBar {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 48px;
+    padding: 0 0 0 10px;
+  }
+
+  .appBarTitleSlot,
+  .appBar > .appBarSpacer:last-child,
+  .appBarEmpty {
+    display: none;
+  }
+
+  .appBar + :not(.body) {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    padding-bottom: 0;
+  }
+
+  .body {
+    grid-row: 3;
+    gap: 12px;
+  }
+
+  .actions {
+    grid-row: 4;
+    gap: 8px;
+    padding: 8px var(--gutter);
+  }
+
+  .homeIndicator {
+    grid-row: 5;
+  }
 }
 
 /* --- home indicator, mirrors SafeArea bottom --- */

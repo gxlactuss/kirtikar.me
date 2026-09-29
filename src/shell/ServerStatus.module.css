@@ -95,3 +95,76 @@
 @media (max-width: 520px) {
   .meta { display: none; }
 }
+
+/* A finger needs a 40px target, not 32. The chip grows with it so the two
+ * still read as one bar. */
+@media (pointer: coarse) {
+  .toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chip {
+    min-height: 40px;
+  }
+}
+
+/* --- a real phone (NATIVE_QUERY in src/stage/devices.ts) ----------------
+ * The bar shares the 56px strip above the app with skip, and later replay,
+ * on the right (see intro.module.css). It sits on their line, 8px down, and
+ * stops short of them: 9.1rem is the wider of the two (skip, 7.8rem) plus
+ * its right margin and a gap. On a 320px screen "Waking the server…" does
+ * not fit in what is left, so the chip ellipses its label rather than
+ * running under the button; the dot keeps saying which state it is in, and
+ * the full text is still there for a screen reader.
+ *
+ * Ellipsis only works on a block's own text, so the chip stops being a flex
+ * row here and the dot sits inline. */
+@media (max-width: 600px) {
+  .bar {
+    top: 8px;
+    left: 12px;
+    max-width: calc(100vw - 12px - 9.1rem);
+  }
+
+  .chip {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 11px;
+    line-height: 38px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dot {
+    display: inline-block;
+    margin-right: 7px;
+    vertical-align: 1px;
+  }
+
+  .toggle {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Skip is narrower here (7.3rem, see intro.module.css), and the chip's own
+ * type and padding come down a step, which together keep most of the label. */
+@media (max-width: 400px) {
+  .bar {
+    gap: 6px;
+    max-width: calc(100vw - 12px - 8.6rem);
+  }
+
+  .chip {
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .dot {
+    margin-right: 5px;
+  }
+}

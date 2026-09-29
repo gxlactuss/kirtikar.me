@@ -82,6 +82,29 @@
   filter: brightness(0.92);
 }
 
+/* On a short screen a stack of three 64px buttons takes a third of it.
+ * 56px is still well clear of a thumb-sized target, and it is what lets the
+ * voice screen show its counter above them on a 568px phone. */
+@container phone (max-height: 640px) {
+  .button {
+    min-height: 56px;
+    padding: 8px 18px;
+    gap: 12px;
+    font-size: 20px;
+  }
+}
+
+/* On a 320px screen a three-word label such as "Make another product" broke
+ * onto two lines under its icon. A step down in type and side padding keeps
+ * it on one, and stays above the app's 16px minimum. */
+@container phone (max-width: 340px) {
+  .button {
+    padding-inline: 14px;
+    gap: 10px;
+    font-size: 19px;
+  }
+}
+
 /* --- busy spinner: 26px, strokeWidth 3 --- */
 
 .spinner {

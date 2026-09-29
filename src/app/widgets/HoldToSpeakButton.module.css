@@ -29,6 +29,9 @@
   /* A held finger is the whole gesture here; iOS would otherwise answer it
      with a callout. */
   -webkit-touch-callout: none;
+  /* The grey tap flash would sit over the button for the whole hold and
+     hide the switch to the recording colour. */
+  -webkit-tap-highlight-color: transparent;
   transition: background-color var(--fast) var(--standard),
     transform var(--fast) var(--standard);
 }
@@ -73,6 +76,17 @@
     /* 12px of spread on a ~330px-wide button */
     transform: scale(1.055);
     opacity: 0;
+  }
+}
+
+/* On a short screen the voice step stacks this over two BigActionButtons,
+ * and at 78px the three leave the body barely a third of a 568px phone.
+ * 60px is still the largest target on the screen, which it should be. */
+@container phone (max-height: 640px) {
+  .button {
+    min-height: 60px;
+    padding: 8px 18px;
+    font-size: 20px;
   }
 }
 
