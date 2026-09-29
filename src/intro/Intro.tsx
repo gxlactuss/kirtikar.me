@@ -119,6 +119,41 @@ const easeInOut = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 /
 
 const SEEN_KEY = 'kirtikar:intro-seen';
 
+/** How close to the end of the page counts as the end, in px.
+ *
+ * A distance rather than a fraction of the track, because what it absorbs is
+ * a distance: the few pixels a phone's rubber band settles short of the true
+ * bottom, or a scroll position rounded to a device pixel. As a fraction it
+ * would be a different allowance on every screen, and on a tall one too
+ * small to cover a bounce at all. */
+const BOTTOM_SLOP_PX = 12;
+
+/** How long after the last scroll, resize or touch the position is read once
+ * more. Safari has no `scrollend`, and a phone's toolbar finishes animating
+ * after the scroll that set it off, so the settled position is otherwise
+ * never looked at. */
+const SETTLE_MS = 160;
+
+// Storage can be switched off, or refuse writes (older Safari in a private
+// window threw on every setItem). Either used to throw inside landing, and a
+// throw there is a visitor at the bottom of the page with no demo.
+function seenBefore() {
+  try {
+    return sessionStorage.getItem(SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markSeen(seen: boolean) {
+  try {
+    if (seen) sessionStorage.setItem(SEEN_KEY, '1');
+    else sessionStorage.removeItem(SEEN_KEY);
+  } catch {
+    // Only the next reload is affected: it plays the intro again.
+  }
+}
+
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
@@ -127,7 +162,7 @@ export function Intro({ children }: { children: ReactNode }) {
   // Landing is one-way on purpose. A judge who is part-way through recording
   // should not be able to scroll themselves back out of the demo by accident.
   const [landed, setLanded] = useState(
-    () => prefersReducedMotion() || sessionStorage.getItem(SEEN_KEY) === '1',
+    () => prefersReducedMotion() || seenBefore(),
   );
 
   // Bumped by replay, which tears the whole sequence down and builds it
@@ -142,6 +177,11 @@ export function Intro({ children }: { children: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landedRef = useRef(landed);
   landedRef.current = landed;
+  // Draws the finished frame. Set by the animation effect, which owns the
+  // elements; landing calls it so the stage is never left half faded in by
+  // a skip that arrived before the scroll did.
+  const finishRef = useRef<(() => void) | null>(null);
+  const skipTimer = useRef(0);
 
   // --- the animation ----------------------------------------------------
   useEffect(() => {
@@ -160,7 +200,6 @@ export function Intro({ children }: { children: ReactNode }) {
     const wordSvg = q<SVGElement>(`.${css.wordSvg}`)!;
     const guide = q<HTMLElement>(`.${css.actGuide}`)!;
     const stageWrap = q<HTMLElement>(`.${css.stageWrap}`)!;
-    const skip = q<HTMLElement>(`.${css.skip}`);
     const gate = q<HTMLElement>(`.${css.handoff}`)!;
     const pieces = [...host.querySelectorAll<SVGPathElement>('[data-piece]')];
     const cards = [...host.querySelectorAll<HTMLElement>('[data-card]')];
@@ -194,10 +233,64 @@ export function Intro({ children }: { children: ReactNode }) {
     // window's: under page zoom, or where svh and innerHeight disagree, those
     // two drift apart, the bottom of the page reads as 83%, and the demo sits
     // there fully drawn and never becomes clickable.
-    const maxScroll = () => {
-      const doc = document.documentElement;
-      return Math.max(1, doc.scrollHeight - doc.clientHeight);
-    };
+    //
+    // Measured against the taller of the two viewports. On a phone,
+    // clientHeight is the viewport with the toolbar showing, but the toolbar
+    // collapses as soon as the visitor scrolls, innerHeight grows, and the
+    // real bottom of the page then read as about 90% — so the demo was never
+    // reached however far they scrolled. The shorter range is always reachable.
+    const maxScroll = () => Math.max(1, docHeight() - viewHeight());
+
+    // The page's real length, whatever else has been added to it. The track
+    // is 240svh, but the document is whatever it is, and the bottom the
+    // visitor can reach is the document's.
+    const docHeight = () =>
+      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+
+    // The tallest the viewport has been at this width. A phone's toolbar
+    // comes back the moment the visitor reaches the bottom, the viewport
+    // shrinks by its height, and a position that was the bottom a frame
+    // earlier now reads as 100px short of it. With the toolbar gone, as it is
+    // whenever the visitor scrolls down, that position is the bottom, so it is
+    // measured that way. A change of width is a rotation, and starts over.
+    let tallest = 0;
+    let tallestAt = 0;
+
+    // The window, the layout viewport and the visual viewport all claim to be
+    // the viewport's height, and on a phone they disagree: innerHeight follows
+    // the toolbar, clientHeight does not, and visualViewport shrinks under a
+    // pinch. The largest is the one that can see the furthest down the page.
+    function viewHeight() {
+      const vv = window.visualViewport;
+      const h = Math.max(
+        window.innerHeight,
+        document.documentElement.clientHeight,
+        vv ? vv.height : 0,
+      );
+      if (window.innerWidth !== tallestAt) {
+        tallestAt = window.innerWidth;
+        tallest = 0;
+      }
+      tallest = Math.max(tallest, h);
+      return tallest;
+    }
+
+    // Whether the visitor is at the end of the page, measured directly rather
+    // than as a ratio. A ratio of two numbers the browser reports is only as
+    // good as the worse of them, and on a phone one of them is always moving,
+    // so the ratio is kept as one way to land and this is the other. The
+    // visual viewport is asked separately because under a pinch it is the
+    // part of the page actually on screen, and can reach the end first.
+    function atBottom() {
+      // Never at the top. A page too short to scroll would otherwise land on
+      // its first frame, before the visitor has seen anything.
+      if (window.scrollY <= 0) return false;
+      const end = docHeight() - BOTTOM_SLOP_PX;
+      const vv = window.visualViewport;
+      return (
+        window.scrollY + viewHeight() >= end || (!!vv && vv.pageTop + vv.height >= end)
+      );
+    }
 
     function apply(p: number, entrance: number) {
       const vh = window.innerHeight;
@@ -255,14 +348,10 @@ export function Intro({ children }: { children: ReactNode }) {
 
       // --- act three: the stage arrives ---
       veil.style.opacity = String(easeInOut(span(p, VEIL)));
-      const paneOut = span(p, PANE_OUT);
-      pane.style.opacity = String(1 - paneOut);
-      // The skip control belongs to the cream world; it must not be left
-      // sitting on the black stage while the handoff is still running.
-      if (skip) {
-        skip.style.opacity = String(1 - paneOut);
-        skip.style.pointerEvents = paneOut > 0.5 ? 'none' : 'auto';
-      }
+      pane.style.opacity = String(1 - span(p, PANE_OUT));
+      // Skip is not faded with the pane. It stays on screen and clickable
+      // until landing, since a visitor stuck in the handoff is exactly the one
+      // who needs it.
       const sIn = easeOut(span(p, STAGE_IN));
       stageWrap.style.opacity = String(sIn);
       stageWrap.style.transform = `scale(${0.94 + 0.06 * sIn})`;
@@ -273,6 +362,10 @@ export function Intro({ children }: { children: ReactNode }) {
       // Once landed, CSS owns the marker and it says the demo is live.
       if (landedRef.current) {
         gate.style.opacity = '';
+        // Full, whatever the chase had reached. Landing can come from the
+        // position before the chase catches up, and the bar should never be
+        // seen to switch over while it still says there is further to go.
+        gate.style.setProperty('--fill', '1');
       } else {
         gate.style.opacity = String(span(p, [STAGE_IN[0], STAGE_IN[0] + 0.06]));
         gate.style.setProperty('--fill', String(span(p, [STAGE_IN[0], 1])));
@@ -306,10 +399,9 @@ export function Intro({ children }: { children: ReactNode }) {
 
       apply(cur, entrance);
 
-      if (target >= 0.999 && !landedRef.current) {
-        sessionStorage.setItem(SEEN_KEY, '1');
-        setLanded(true);
-      }
+      // The ratio's way of landing, kept beside the direct measure in
+      // measure(): whichever of the two sees the bottom first wins.
+      if (target >= 0.999 && !landedRef.current) land();
 
       if (cur !== target || !entranceDone) {
         raf = requestAnimationFrame(frame);
@@ -324,11 +416,30 @@ export function Intro({ children }: { children: ReactNode }) {
       raf = requestAnimationFrame(frame);
     }
 
-    function onScroll() {
+    function measure() {
       // The sequence is over; the scroll position no longer means anything.
       if (landedRef.current) return;
+      // At the bottom is landed, there and then, not a frame later when the
+      // chase gets round to it: on a phone the next event may be the toolbar
+      // coming back, and by then the position no longer reads as the bottom.
+      if (atBottom()) {
+        target = 1;
+        land();
+        return;
+      }
       target = clamp01(window.scrollY / maxScroll());
       kick();
+    }
+
+    // Every event that can move the page, or the viewport over it, reads the
+    // position again, and then once more after they stop. A phone's momentum
+    // scroll, rubber band and toolbar each finish after the event that
+    // started them, and the place they settle is the one that counts.
+    let settleTimer = 0;
+    function onMove() {
+      measure();
+      window.clearTimeout(settleTimer);
+      if (!landedRef.current) settleTimer = window.setTimeout(measure, SETTLE_MS);
     }
 
     // Atomiser readiness arrives asynchronously; redraw once it does.
@@ -340,14 +451,21 @@ export function Intro({ children }: { children: ReactNode }) {
       }
     }, 80);
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    onScroll();
+    const vv = window.visualViewport;
+    const winEvents = ['scroll', 'scrollend', 'resize', 'touchend', 'touchcancel'] as const;
+    for (const type of winEvents) window.addEventListener(type, onMove, { passive: true });
+    vv?.addEventListener('resize', onMove);
+    vv?.addEventListener('scroll', onMove);
+    measure();
     kick();
+    finishRef.current = () => apply(1, 0);
 
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      finishRef.current = null;
+      for (const type of winEvents) window.removeEventListener(type, onMove);
+      vv?.removeEventListener('resize', onMove);
+      vv?.removeEventListener('scroll', onMove);
+      window.clearTimeout(settleTimer);
       window.clearInterval(readyPoll);
       cancelAnimationFrame(raf);
       ro.disconnect();
@@ -389,15 +507,41 @@ export function Intro({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [landed]);
 
+  // A pending skip must not outlive the component, or it lands on nothing.
+  useEffect(() => () => window.clearTimeout(skipTimer.current), []);
+
+  // land() and skip() are recreated every render, but the effects above hold
+  // on to whichever copy existed when they last ran: the Escape handler keeps
+  // the one from when `landed` last changed, the scroll listeners the one
+  // from the current run. That is only safe because both read nothing but
+  // refs and the state setter, which never change. Keep it that way; a prop
+  // or a piece of state read in here would be read stale.
+  function land() {
+    if (landedRef.current) return;
+    landedRef.current = true;
+    // Whichever way the visitor arrived, a skip still counting down is now
+    // spent, and must not fire into a replay started before it would have.
+    window.clearTimeout(skipTimer.current);
+    markSeen(true);
+    finishRef.current?.();
+    setLanded(true);
+  }
+
   function skip() {
     // Scrolled, not jumped: the sequence plays through at speed rather than
     // cutting, so a visitor who skips still sees where they ended up. The
     // browser clamps the overshoot to the true bottom.
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    // Skip does not depend on the scroll to finish the job. If the scroll
+    // falls short (a mobile toolbar resizing the page mid-scroll, or smooth
+    // scrolling switched off), the demo still arrives.
+    window.clearTimeout(skipTimer.current);
+    skipTimer.current = window.setTimeout(land, 900);
   }
 
   function replay() {
-    sessionStorage.removeItem(SEEN_KEY);
+    window.clearTimeout(skipTimer.current);
+    markSeen(false);
     window.scrollTo({ top: 0, behavior: 'auto' });
     setLanded(false);
     setRunId((n) => n + 1);
@@ -464,6 +608,9 @@ export function Intro({ children }: { children: ReactNode }) {
             <p className={css.guideNote}>
               This demo shows the raw processing only. The Kirtikar app itself
               considers more parameters and asks the seller for more feedback.
+            </p>
+            <p className={css.desktopNote}>
+              Best viewed on a desktop or laptop, where the whole demo fits on screen.
             </p>
             <ol className={css.cards}>
               {GUIDE.map((step, i) => (
