@@ -44,6 +44,34 @@
   margin: 4px 0 -6px;
 }
 
+.nameField {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nameInput {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-width: 3px;
+  border-color: var(--terracotta);
+}
+
+.savedNote {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: -8px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

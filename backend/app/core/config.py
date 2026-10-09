@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     # Where today's count is mirrored so a restart doesn't reset it. Only
     # durable if this is on storage that outlives the container.
     DEMO_LIMIT_STATE_PATH: Union[str, None] = None
+    # Where each run's visitor, result and media are copied
+    # (app/services/run_archive.py). Unset keeps nothing.
+    RUN_ARCHIVE_DIR: Union[str, None] = None
 
     # AI & Speech Service configuration
     SARVAM_API_KEY: Union[str, None] = None

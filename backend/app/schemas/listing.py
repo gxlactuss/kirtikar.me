@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.enums import ListingState
 
 
@@ -12,6 +12,9 @@ class ListingCreateRequest(BaseModel):
     # How many photos the app is about to upload, so the pipeline waits for the
     # whole set rather than starting on the first one.
     photo_count: Optional[int] = None
+    # The demo's optional "your name" box. Archived with the run, not stored
+    # on the listing.
+    visitor_name: Optional[str] = Field(None, max_length=100)
 
 
 class FactSheetResponse(BaseModel):

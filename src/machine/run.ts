@@ -4,6 +4,7 @@ import { pollToTerminal } from '../api/poll';
 import type { Listing } from '../api/types';
 import { pickFixture } from '../fallback/fixtures';
 import { forceFixtures } from './flags';
+import { visitorName } from '../util/visitor';
 import type { DemoStore } from './store';
 import { PipelineTicker, STAGES } from './ticker';
 import type { FallbackReason, Provenance } from './types';
@@ -103,7 +104,7 @@ async function live(
   await untilAwake(store, signal);
   const created = await api.createListing(
     clientItemId,
-    { description: typed, photoCount: 1 },
+    { description: typed, photoCount: 1, visitorName: visitorName() },
     signal,
   );
 

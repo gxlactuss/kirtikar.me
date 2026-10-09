@@ -6,6 +6,7 @@ from typing import Optional
 from app.db.session import SessionLocal
 from app.services.listing import InvalidStateTransitionError, ListingNotFoundError
 from app.services.pipeline.runner import run_listing_pipeline
+from app.services.run_archive import archive_run
 
 logger = logging.getLogger("app.workers.listing_pipeline")
 
@@ -38,3 +39,5 @@ def process_listing(listing_id: uuid.UUID, seller_id: Optional[uuid.UUID] = None
         logger.exception("Listing %s -> pipeline raised an unhandled error", listing_id)
     finally:
         db.close()
+    # Failed runs too: what a visitor sent is worth keeping either way.
+    archive_run(listing_id)

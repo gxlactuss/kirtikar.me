@@ -51,7 +51,7 @@ export class ApiClient {
 
   async createListing(
     clientItemId: string,
-    opts: { description?: string | null; photoCount?: number } = {},
+    opts: { description?: string | null; photoCount?: number; visitorName?: string } = {},
     signal?: AbortSignal,
   ): Promise<Listing> {
     return this.json<Listing>('POST', `${V1}/listings`, {
@@ -62,6 +62,7 @@ export class ApiClient {
         // so only send what the server declares.
         ...(opts.description ? { description: opts.description } : {}),
         ...(opts.photoCount ? { photo_count: opts.photoCount } : {}),
+        ...(opts.visitorName?.trim() ? { visitor_name: opts.visitorName.trim() } : {}),
       },
     });
   }

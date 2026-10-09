@@ -133,6 +133,7 @@ jobs:
               'GEMINI_FALLBACK_MODELS=gemini-3.1-flash-lite' \
               'GEMINI_TIMEOUT_SECONDS=45' \
               'PIPELINE_MAX_STAGE_ATTEMPTS=2' \
+              'RUN_ARCHIVE_DIR=/runs' \
             --output none
 
           fqdn=$(az containerapp show \

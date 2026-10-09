@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { copy } from '../../copy/en';
 import { PRODUCTS, PRODUCT_SLOTS, UPLOAD_SLUG, photoLabel, type Product } from '../products';
 import { prepareFromUrl, prepareImage } from '../../util/image';
+import { setVisitorName, visitorName } from '../../util/visitor';
 import { dispatch, useDemo } from '../../machine/store';
 import type { Photo } from '../../machine/types';
 import { BigActionButton } from '../widgets/BigActionButton';
@@ -23,6 +24,7 @@ export function PickStage() {
   // Which control is working, so only that one shows a spinner.
   const [busy, setBusy] = useState<'catalog' | 'upload' | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState(visitorName);
 
   function choose(next: Photo | null) {
     if (photo) URL.revokeObjectURL(photo.url);
@@ -79,6 +81,22 @@ export function PickStage() {
         title={copy.demo.pickTitle}
         subtitle={copy.demo.pickBody(PRODUCTS.length > 0)}
       />
+
+      <label className={css.nameField}>
+        <span className={css.sectionLabel}>{copy.demo.nameLabel}</span>
+        <input
+          className={css.nameInput}
+          type="text"
+          value={name}
+          maxLength={60}
+          autoComplete="name"
+          onChange={(e) => {
+            setName(e.target.value);
+            setVisitorName(e.target.value);
+          }}
+        />
+      </label>
+      <p className={css.savedNote}>{copy.demo.savedNote}</p>
 
       {photo ? (
         <figure className={css.chosen}>

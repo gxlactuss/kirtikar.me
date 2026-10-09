@@ -4,3 +4,6 @@
 2026-09-20 06:54:34 | INFO     | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Processing image: 5eaaefaa-899a-4c4c-a358-bf082a425c80.jpg -> item_id: 5eaaefaa-899a-4c4c-a358-bf082a425c80
 2026-09-20 06:54:34 | INFO     | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Quality gate passed (blur_score=2294.2, ROI_brightness=167.9)
 2026-09-20 06:54:36 | WARNING  | [5eaaefaa-899a-4c4c-a358-bf082a425c80] Subject gate rejected: Could not separate the item from its surroundings. Please photograph the item on its own against a plain wall, floor or cloth.; The item covers only 2.2% of the photo. Please move closer so it fills most of the frame.
+2026-10-09 09:34:14 | INFO     | [b23c9e0e-7021-4de5-81f6-c5e91f7e08ae] Processing image: b23c9e0e-7021-4de5-81f6-c5e91f7e08ae.jpg -> item_id: b23c9e0e-7021-4de5-81f6-c5e91f7e08ae
+2026-10-09 09:34:14 | INFO     | [b23c9e0e-7021-4de5-81f6-c5e91f7e08ae] Quality gate passed (blur_score=57.6, ROI_brightness=42.0)
+2026-10-09 09:34:16 | INFO     | [b23c9e0e-7021-4de5-81f6-c5e91f7e08ae] Done in 2.03s -> Saved: b23c9e0e-7021-4de5-81f6-c5e91f7e08ae_clean.jpg

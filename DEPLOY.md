@@ -392,6 +392,42 @@ server restarted" and falls back to a recorded run.
 It does mean **nothing a judge creates survives their visit.** Nothing in the
 demo depends on it doing so.
 
+### The run archive
+
+The one exception is a copy of each run, kept so there is a record of who used
+the demo and what they made. With `RUN_ARCHIVE_DIR` set, the API writes one
+folder per listing (`app/services/run_archive.py`), named by IST time:
+`visitor.json` (the optional name from the first step, IP, browser),
+`run.json` (the finished listing and transcript) and `media/` (photo, studio
+image, voice note).
+
+`/runs` is an Azure Files share mounted into the container, so it survives
+scale-to-zero. Set up once:
+
+```sh
+SA=kirtikarruns
+az storage account create -g "$RG" -n "$SA" -l "$LOC" --sku Standard_LRS
+az storage share-rm create -g "$RG" --storage-account "$SA" -n runs --quota 5
+KEY=$(az storage account keys list -g "$RG" -n "$SA" --query '[0].value' -o tsv)
+az containerapp env storage set -g "$RG" -n kirtikar-env --storage-name runs \
+  --azure-file-account-name "$SA" --azure-file-account-key "$KEY" \
+  --azure-file-share-name runs --access-mode ReadWrite
+
+# Add the volume to the app. The CLI has no flag for this, only YAML:
+az containerapp show -g "$RG" -n kirtikar-api -o yaml > app.yaml
+#   under template:                 volumes: [{name: runs, storageName: runs, storageType: AzureFile}]
+#   under template.containers[0]:   volumeMounts: [{volumeName: runs, mountPath: /runs}]
+az containerapp update -g "$RG" -n kirtikar-api --yaml app.yaml
+```
+
+The deploy workflow sets `RUN_ARCHIVE_DIR=/runs`, and the image-only update it
+runs keeps the volume. To read the runs:
+
+```sh
+az storage file download-batch --account-name "$SA" --account-key "$KEY" \
+  -s runs -d ./runs
+```
+
 ---
 
 ## When something is wrong

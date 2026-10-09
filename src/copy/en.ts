@@ -74,6 +74,8 @@ export const copy = {
     pickOwnAgain: 'Use a different photo of mine',
     pickCatalog: 'Or choose one',
     pickConfirm: 'Use this photo',
+    nameLabel: 'Your name (optional)',
+    savedNote: 'Runs, including the photo and voice note, are saved so we can improve the demo.',
     uploadUnreadable: 'That file could not be opened as a photo. Try a JPEG or PNG.',
 
     typeInstead: 'Type it instead',

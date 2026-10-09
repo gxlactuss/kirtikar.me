@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.demo_limit import demo_rate_limit
@@ -32,6 +32,7 @@ from app.services.listing_fields import (
 )
 from app.services.listing_view import listing_image_urls, to_listing_response
 from app.services.media_storage import save_media_upload
+from app.services.run_archive import archive_run, save_visitor, visitor_from
 from app.schemas.enums import MediaType
 from app.models.media import Media
 from app.services.listing import (
@@ -59,6 +60,8 @@ router = APIRouter(prefix="/listings", tags=["Listings"])
 )
 def create_listing(
     payload: ListingCreateRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_seller: Seller = Depends(get_current_seller),
     db: Session = Depends(get_db),
 ) -> ListingResponse:
@@ -68,6 +71,12 @@ def create_listing(
         client_item_id=payload.client_item_id,
         description=payload.description,
         photo_count=payload.photo_count,
+    )
+    background_tasks.add_task(
+        save_visitor,
+        listing.id,
+        listing.created_at,
+        visitor_from(request, payload.visitor_name),
     )
     return to_listing_response(listing)
 
@@ -135,6 +144,7 @@ def delete_listing(
 )
 def patch_listing(
     listing_id: str,
+    background_tasks: BackgroundTasks,
     changes: Dict[str, Any] = Body(...),
     current_seller: Seller = Depends(get_current_seller),
     db: Session = Depends(get_db),
@@ -149,6 +159,7 @@ def patch_listing(
 
     db.commit()
     db.refresh(listing)
+    background_tasks.add_task(archive_run, listing.id)
     return to_listing_response(listing)
 
 
@@ -164,6 +175,7 @@ def patch_listing(
 )
 async def answer_listing_question(
     listing_id: str,
+    background_tasks: BackgroundTasks,
     voiceReply: UploadFile = File(...),
     field: Optional[str] = Form(None),
     transcript: Optional[str] = Form(None),
@@ -202,6 +214,7 @@ async def answer_listing_question(
 
     db.commit()
     db.refresh(listing)
+    background_tasks.add_task(archive_run, listing.id)
     return to_listing_response(listing)
 
 
